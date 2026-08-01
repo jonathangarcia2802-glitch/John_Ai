@@ -203,3 +203,5 @@ usage: ssh [-46AaCfGgKkMNnqsTtVvXxYy] [-B bind_interface]
            [-w local_tun[:remote_tun]] destination [command]
 pip install python-dotenv
 pip install gpiozero
+python main.py
+pup install litellm hugginface
