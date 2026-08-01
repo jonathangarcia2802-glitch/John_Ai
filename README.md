@@ -182,3 +182,14 @@ try:
     print("\n[IA OPEN SOURCE LOCAL] :\n", texte_ia)
 except Exception as e:
     print("[ERREUR] : Ollama n'est pas démarré sur le PC.", e)
+[trans.py](https://github.com/user-attachments/files/30623992/trans.py)
+import os
+
+# On donne le chemin direct vers l'exécutable Git
+git_cmd = r'"C:\Program Files\Git\cmd\git.exe"'
+
+os.system(f"{git_cmd} add .")
+os.system(f'{git_cmd} commit -m "Premier transfert officiel de John IA"')
+os.system(f"{git_cmd} push")
+[texte.py](https://github.com/user-attachments/files/30623996/texte.py)
+import os
