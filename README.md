@@ -20,6 +20,8 @@ def verifier_connexion_systeme():
     print(f"-> Port cible : {os.getenv('TARGET_PORT', '5000 (par défaut)')}")
     print(f"-> Environnement : {os.getenv('HOSTING_ENVIRONMENT', 'Hugging Face')}")
     
+
+    
     print("---------------------------------------------")
 
 if __name__ == "__main__":
