@@ -156,11 +156,29 @@ if __name__ == "__main__":
     agent.lancer()
 [nngrok.py](https://github.com/user-attachments/files/30623013/nngrok.py)
 
-from pyngrok import ngrok
+from pyngrok immp
 
-# Ferme les éventuels tunnels ouverts
-ngrok.kill()
+
 
 # Ouvre le tunnel sur le port 11434 (Ollama)
 public_url = ngrok.connect(11434)
 print("URL NGROK OLLAMA :", public_url)
+[maas.py](https://github.com/user-attachments/files/30623029/maas.py)
+import requests
+
+# L'adresse locale d'Ollama sur ton PC
+url_local = "http://localhost:11434/api/generate"
+
+# On demande au modèle Open Source (ex: Mistral ou Llama)
+payload = {
+    "model": "mistral",
+    "prompt": "Écris-moi un script Python qui trie les fichiers d'un dossier.",
+    "stream": False
+}
+
+try:
+    reponse = requests.post(url_local, json=payload)
+    texte_ia = reponse.json()['response']
+    print("\n[IA OPEN SOURCE LOCAL] :\n", texte_ia)
+except Exception as e:
+    print("[ERREUR] : Ollama n'est pas démarré sur le PC.", e)
