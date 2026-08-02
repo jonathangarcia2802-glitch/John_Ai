@@ -9,8 +9,7 @@ Mon projet d'IA locale connectée à un serveur de déploiement continu.
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 
-app = Flask(__name__)
-CORS(app)
+app = Flask(__name__)CORS(app)
 
 print("=========================================")
 print(" PASSERELLE PRIVÉE V8 ACTIVE & SÉCURISÉE ")
