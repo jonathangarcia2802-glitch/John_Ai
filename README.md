@@ -1,4 +1,3 @@
-[john_passerelle2_privee.py](https://github.com/user-attachments/files/30620008/john_passerelle2_privee.py)# John_Ai
 ## Description
 Mon projet d'IA locale connectée à un serveur de déploiement continu.
 
