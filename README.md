@@ -59,21 +59,18 @@ pip install litellm hugginface
 import os
 from flask import Flask, request, jsonify
 from flask_cors import CORS
-
 app = Flask(__name__)
 CORS(app)
-
 print("=========================================")
 print(" PASSERELLE PRIVÉE V8 ACTIVE & SÉCURISÉE ")
 print("=========================================")
 print("[PROTOCOLE] : Chiffrement d'identification automatique activé.")
 print("[SÉCURITÉ] : En attente de la signature du Patron...")
-
 @app.route('/ordre_mobile', methods=['POST'])
 def passerelle_v8():
 donnees = request.get_json() or {}
     
- # Vérification de la signature du téléphone
+# Vérification de la signature du téléphone
 signature = donnees.get("signature", "")
 message_patron = donnees.get("ordre", "")
 if signature != "PATRON_V8_SECURE_TOKEN_99":
@@ -110,30 +107,8 @@ return jsonify({
 [trans.py](https://github.com/user-attachments/files/30625668/trans.py)
 
 if __name__ == '__main__':
-  [john_v6.py](https://github.com/user-attachments/files/30625663/john_v6.py)
-  app.run(host='0.0.0.0', port=5000, debug=False)
-  
-import os
-import sys
-import subprocess
-import requests
-
-def reparer_et_relancer():
-    os.system('cls' if os.name == 'nt' else 'clear')
-    print("=============================================")
-    # 1. NETTOYAGE RADICAL DE LA MÉMOIRE CACHE
-    try:
-        # On ferme de force tous les scripts Python et blocs-notes qui buggent en arrière-plan
-        subprocess.run("taskkill /F /IM python.exe /IM notepad.exe", shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-    except Exception:
-        pass
-    print("[1/3] MÉMOIRE NETTOYÉE : Fenêtres fantômes éliminées.")
-
-    # 2. INJECTION DU CODE PARFAIT ET CONFIGURÉ SANS ERREUR
-    cle_api = "Q"
-    url_corrigee = f"https://googleapis.com{cle_api}"
-    
-    code_propre = f"""import os
+[john_v6.py](https://github.com/user-attachments/files/30625663/john_v6.py)
+app.run(host='0.0.0.0', port=5000, debug=False)
     
 import tkinter as tk
 from tkinter import messagebox, scrolledtext
@@ -141,17 +116,17 @@ import requests
 import threading
 
 class QG_Advanced_UI:
-    def __init__(self):
-        self.cle_api = "{cle_api}"
-        self.url = "{url_corrigee}"
-        self.instruction_systeme = (
-            "Tu es l'associé IA du patron. Tu es un ingénieur expert en Python. "
-            "Génère UNIQUEMENT du code Python propre, optimisé et commenté. "
-            "Pas de bavardage, pas de texte introductif, donne directement le script."
-        )
+def __init__(self):
+self.cle_api = "{cle_api}"
+self.url = "{url_corrigee}"
+self.instruction_systeme = (
+"Tu es l'associé IA du patron. Tu es un ingénieur expert en Python. "
+ "Génère UNIQUEMENT du code Python propre, optimisé et commenté. "
+"Pas de bavardage, pas de texte introductif, donne directement le script."
+)
 
-    def interroger_gemini(self, prompt):
-        payload = {{"contents": [{{"parts": [{{"text": prompt}}]}}], "systemInstruction": {{"parts": [{{"text": self.instruction_systeme}}]}}}}
+def interroger_gemini(self, prompt):
+payload = {{"contents": [{{"parts": [{{"text": prompt}}]}}], "systemInstruction": {{"parts": [{{"text": self.instruction_systeme}}]}}}}
         headers = {{"Content-Type": "application/json"}}
         try:
             reponse = requests.post(self.url, json=payload, headers=headers)
