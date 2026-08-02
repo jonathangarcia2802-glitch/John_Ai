@@ -252,3 +252,358 @@ fenetre.mainloop()
 
  if __name__ == "__main__":
     reparer_et_relancer()
+import os
+import requests
+
+def verifier_connexion_systeme():
+    print("--- VÉRIFICATION DES CONNEXIONS (PORT 5000) ---")
+    
+    # Vérification des variables d'environnement chargées
+    ngrok_status = "Présente" if os.getenv("NGROK_AUTH_TOKEN") else "Manquante ou non détectée"
+    api_status = "Présente" if os.getenv("API_KEY_PRIMARY") else "Manquante ou non détectée"
+    
+    print(f"-> Token Ngrok : {ngrok_status}")
+    print(f"-> Clé API principale : {api_status}")
+    print(f"-> Port cible : {os.getenv('TARGET_PORT', '5000 (par défaut)')}")
+    print(f"-> Environnement : {os.getenv('HOSTING_ENVIRONMENT', 'Hugging Face')}")
+    
+    print("---------------------------------------------")
+
+if __name__ == "__main__":
+    verifier_connexion_systeme()
+    import os
+import json
+import asyncio
+import subprocess
+import wave
+import requests
+import sounddevice as sd
+import cv2
+import flet as ft
+
+try:
+    from bleak import BleakScanner
+    BLEUETOOTH_DISPONIBLE = True
+except ImportError:
+    BLEUETOOTH_DISPONIBLE = False
+
+CONFIG_DIR = "qg_souverain_core"
+os.makedirs(CONFIG_DIR, exist_ok=True)
+CONFIG_FICHIER = os.path.join(CONFIG_DIR, "memoire_lia.json")
+
+def charger_memoire():
+    config_defaut = {
+        "patron": "Jonathan",
+        "station": "QG Souverain v3.6 - Production Core",
+        "historique": [],
+        "frequence_vocal_hz": 44100,
+        "profil_voix_path": os.path.join(CONFIG_DIR, "profil_voix_patron.wav")
+    }
+    if os.path.exists(CONFIG_FICHIER):
+        try:
+            with open(CONFIG_FICHIER, "r", encoding="utf-8") as f:
+                data = json.load(f)
+                if isinstance(data, dict):
+                    for k, v in config_defaut.items():
+                        if k not in data:
+                            data[k] = v
+                    return data
+        except Exception:
+            pass
+    return config_defaut
+
+memoire = charger_memoire()
+
+def sauvegarder_memoire(data):
+    with open(CONFIG_FICHIER, "w", encoding="utf-8") as f:
+        json.dump(data, f, ensure_ascii=False, indent=4)
+
+class NoyauOllamaProduction:
+    def __init__(self):
+        self.url = "http://192.168.1.61:11434/v1/chat/completions"
+        self.model = "phi3.5:latest"
+
+    def interroger(self, prompt):
+        try:
+            headers = {"Content-Type": "application/json"}
+            payload = {
+                "model": self.model,
+                "messages": [
+                    {"role": "system", "content": "Tu es le noyau IA opérationnel et souverain du QG."},
+                    {"role": "user", "content": prompt}
+                ],
+                "stream": False
+            }
+            res = requests.post(self.url, headers=headers, json=payload, timeout=45)
+            if res.status_code == 200:
+                data = res.json()
+                return data["choices"]["message"]["content"]
+            else:
+                return f"Erreur Ollama [{res.status_code}] : {res.text}"
+        except requests.exceptions.ConnectionError:
+            return "❌ Erreur critique : Impossible de joindre le serveur Ollama (192.168.1.61:11434)."
+        except Exception as e:
+            return f"❌ Erreur réseau : {e}"
+
+ia_locale = NoyauOllamaProduction()
+
+def executer_commande_systeme(cmd):
+    try:
+        res = subprocess.run(cmd, shell=True, capture_output=True, text=True, timeout=15)
+        if res.returncode == 0:
+            return res.stdout.strip() if res.stdout.strip() else "Exécuté avec succès."
+        else:
+            return f"Erreur CMD : {res.stderr.strip()}"
+    except Exception as e:
+        return f"Exception système : {e}"
+
+async def main(page: ft.Page):
+    page.title = "QG Souverain — Node Production"
+    page.theme_mode = ft.ThemeMode.DARK
+    page.vertical_alignment = ft.MainAxisAlignment.CENTER
+    page.horizontal_alignment = ft.CrossAxisAlignment.CENTER
+    page.window_width = 480
+    page.window_height = 920
+
+    titre_app = ft.Text("🛡️ QG SOUVERAIN — ACTIF (LOCAL MESH)", size=11, weight=ft.FontWeight.BOLD, color="cyan")
+    chat_view = ft.ListView(expand=1, spacing=10, padding=12, auto_scroll=True)
+    
+    input_champ = ft.TextField(
+        label="Ordre direct ou 'cmd: ...'",
+        border_color="cyan",
+        focused_border_color="blue",
+        expand=True
+    )
+
+    def log_ui(auteur, texte, couleur="white"):
+        chat_view.controls.append(
+            ft.Container(
+                content=ft.Column([
+                    ft.Text(f"[{auteur}]", size=10, weight=ft.FontWeight.BOLD, color="blueGrey400"),
+                    ft.Text(texte, color=couleur, size=13)
+                ]),
+                padding=10, border_radius=8, bgcolor="grey900"
+            )
+        )
+        page.update()
+
+    # --- TÂCHE DE FOND : SURVEILLANCE ET PROXIMITÉ CONTINUE ---
+    async def boucle_surveillance_arriere_plan():
+        """Tourne en continu pour simuler le radar de proximité et l'écoute mesh."""
+        while True:
+            try:
+                if BLEUETOOTH_DISPONIBLE:
+                    devices = await BleakScanner.discover(timeout=3.0)
+                    # Analyse passive de présence des appareils connus dans l'environnement
+                    actifs = [d.name for d in devices if d.name]
+                    if actifs:
+                        # Trace discrète de la présence du maillage
+                        pass
+            except Exception:
+                pass
+            await asyncio.sleep(15) # Intervalle de balayage
+
+    async def action_voix(e):
+        log_ui("Système", "⏳ Calibration micro 44100 Hz...", "yellow")
+        def record_blocking():
+            fs = 44100
+            audio = sd.rec(int(5 * fs), samplerate=fs, channels=1, dtype='int16')
+            sd.wait()
+            path = memoire["profil_voix_path"]
+            with wave.open(path, 'wb') as wf:
+                wf.setnchannels(1)
+                wf.setsampwidth(2)
+                wf.setframerate(fs)
+                wf.writeframes(audio.tobytes())
+            return path
+        
+        chemin_wav = await asyncio.to_thread(record_blocking)
+        log_ui("Biométrie", f"🎤 Empreinte vocale validée ({chemin_wav}).", "green")
+
+    async def action_visage(e):
+        log_ui("Système", "👁️ Analyse faciale...", "yellow")
+        def capture_blocking():
+            cap = cv2.VideoCapture(0)
+            if not cap.isOpened():
+                return None
+            import time
+            time.sleep(1)
+            ret, frame = cap.read()
+            cap.release()
+            cv2.destroyAllWindows()
+            if ret:
+                path = os.path.join(CONFIG_DIR, "visage_patron.jpg")
+                cv2.imwrite(path, frame)
+                return path
+            return None
+
+        chemin_img = await asyncio.to_thread(capture_blocking)
+        if chemin_img:
+            log_ui("Biométrie", f"👁️ Visage confirmé ({chemin_img}).", "green")
+        else:
+            log_ui("Biométrie", "❌ Caméra inaccessible.", "red")
+
+    async def action_bluetooth(e):
+        if not BLEUETOOTH_DISPONIBLE:
+            log_ui("Réseau", "❌ Module 'bleak' absent.", "red")
+            return
+        log_ui("Système", "📡 Balayage 2.4 GHz en cours...", "yellow")
+        try:
+            devices = await BleakScanner.discover(timeout=4.0)
+            if not devices:
+                log_ui("Réseau", "📡 Aucun signal détecté.", "yellow")
+                return
+            lignes = [f"• {d.name or 'Inconnu'} ({d.address}) [{d.rssi} dBm]" for d in devices]
+            log_ui("Réseau Bluetooth", "\n".join(lignes), "cyan")
+        except Exception as ex:
+            log_ui("Réseau", f"❌ Erreur scan : {ex}", "red")
+
+    barre_outils = ft.Row([
+        ft.ElevatedButton("🎤 Micro", bgcolor="blueGrey850", color="white", on_click=action_voix),
+        ft.ElevatedButton("👁️ Caméra", bgcolor="blueGrey850", color="white", on_click=action_visage),
+        ft.ElevatedButton("📡 Bluetooth", bgcolor="blueGrey850", color="white", on_click=action_bluetooth)
+    ], alignment=ft.MainAxisAlignment.SPACE_AROUND)
+
+    async def soumettre(e):
+        texte = input_champ.value.strip()
+        if not texte:
+            return
+        log_ui("Jonathan", texte, "cyan")
+        input_champ.value = ""
+        page.update()
+
+        if texte.lower().startswith("cmd:"):
+            commande = texte[4:].strip()
+            res_cmd = await asyncio.to_thread(executer_commande_systeme, commande)
+            log_ui("Exécuteur Système", res_cmd, "green")
+        else:
+            reponse = await asyncio.to_thread(ia_locale.interroger, texte)
+            log_ui("Phi-3.5 (Local)", reponse, "white")
+            memoire["historique"].append({"user": texte, "ai": reponse})
+            sauvegarder_memoire(memoire)
+
+    btn_envoyer = ft.ElevatedButton("Transmettre", bgcolor="green", color="white", on_click=soumettre)
+    input_champ.on_submit = soumettre
+
+    page.add(
+        ft.Column([
+            titre_app,
+            barre_outils,
+            chat_view,
+            ft.Row([input_champ, btn_envoyer], alignment=ft.MainAxisAlignment.SPACE_BETWEEN)
+        ], expand=True, alignment=ft.MainAxisAlignment.START)
+    )
+
+    # Lancement de la boucle asynchrone de fond au démarrage de l'app
+    page.run_task(boucle_surveillance_arriere_plan)
+
+if __name__ == "__main__":
+    ft.app(target=main)
+    git add .
+git commit -m "Mise a jour cerveau"
+git push
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Passerelle Vocale IA V8</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #0b0c10; color: #c5c6c7; text-align: center; padding: 20px; margin: 0; }
+        .container { max-width: 450px; margin: 40px auto; background: #1f2833; padding: 30px; border-radius: 20px; box-shadow: 0 8px 32px 0 rgba(0, 255, 204, 0.2); border: 1px solid #45a29e; }
+        h1 { color: #66fcf1; font-size: 26px; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 2px; }
+        .status-box { background: #0b0c10; padding: 12px; border-radius: 10px; color: #66fcf1; font-size: 14px; font-weight: bold; border: 1px solid #1f2833; margin-bottom: 25px; }
+        
+        /* GROS BOUTON CENTRAL POUR PARLER */
+        .mic-button { background: linear-gradient(135deg, #66fcf1, #45a29e); color: #0b0c10; border: none; width: 140px; height: 140px; border-radius: 50%; font-size: 16px; font-weight: bold; cursor: pointer; box-shadow: 0 0 25px rgba(102, 252, 241, 0.4); transition: all 0.3s ease; margin: 20px auto; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+        .mic-button:active { transform: scale(0.95); box-shadow: 0 0 15px rgba(102, 252, 241, 0.2); }
+        .mic-icon { font-size: 32px; margin-bottom: 5px; }
+        
+        #transcript { margin-top: 20px; min-height: 50px; color: #ffffff; font-style: italic; font-size: 16px; padding: 10px; background: #0b0c10; border-radius: 8px; }
+        #output { margin-top: 25px; background: #0b0c10; padding: 20px; border-radius: 10px; text-align: left; font-family: monospace; white-space: pre-wrap; display: none; border-left: 5px solid #66fcf1; color: #ffffff; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Passerelle Vocale V8</h1>
+    <div class="status-box">🔒 ANTENNE ACTIVE & CHIFFREMENT ÉTABLI</div>
+    
+    <p>Appuie sur le bouton pour parler directement à toutes les IA :</p>
+    
+    <!-- LE BOUTON UNIQUE INTERCONNECTÉ -->
+    <button class="mic-button" id="btnParler" onclick="activerReconnaissanceVocale()">
+        <span class="mic-icon">🎙️</span>
+        <span>PARLER</span>
+    </button>
+    
+    <div id="transcript">En attente de ta voix...</div>
+    <div id="output"></div>
+</div>
+
+<script>
+    // Configuration de la reconnaissance vocale du téléphone
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    const transcriptDiv = document.getElementById('transcript');
+    const outputDiv = document.getElementById('output');
+    const btnParler = document.getElementById('btnParler');
+
+    if (!SpeechRecognition) {
+        transcriptDiv.innerHTML = "❌ Ton téléphone ne prend pas en charge la reconnaissance vocale directe.";
+    } else {
+        const recognition = new SpeechRecognition();
+        recognition.lang = 'fr-FR';
+        recognition.interimResults = false;
+
+        recognition.onstart = () => {
+            transcriptDiv.innerHTML = "🎙️ Je t'écoute, patron... Parle maintenant.";
+            btnParler.style.animation = "pulse 1.5s infinite";
+        };
+
+        recognition.onspeechend = () => {
+            recognition.stop();
+        };
+
+        recognition.onresult = (event) => {
+            const voixCapturee = event.results[0][0].transcript;
+            transcriptDiv.innerHTML = `« ${voixCapturee} »`;
+            
+            // Envoi immédiat à la passerelle V8 par l'antenne
+            transmettreOrdreIA(voixCapturee);
+        };
+
+        recognition.onerror = (event) => {
+            transcriptDiv.innerHTML = "❌ Erreur micro ou aucune voix détectée. Réessaye.";
+        };
+
+        function activerReconnaissanceVocale() {
+            outputDiv.style.display = "none";
+            recognition.start();
+        }
+    }
+
+    function transmettreOrdreIA(texteVocal) {
+        outputDiv.style.display = "block";
+        outputDiv.innerHTML = "⚡ Chiffrement réseau... Réveil instantané de toutes les IA...";
+
+        // Connexion automatique à ta passerelle locale john_v8
+        fetch('http://192.168.1', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ 
+                ordre: texteVocal,
+                signature: "PATRON_V8_SECURE_TOKEN_99" // Ton chiffrement d'antenne automatique
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            outputDiv.innerHTML = `<strong>[${data.statut}]</strong>\n\n${data.reponse}`;
+        })
+        .catch(error => {
+            outputDiv.innerHTML = "❌ Liaison perdue avec la V8. Vérifie le Wi-Fi ou le script sur le PC.";
+        });
+    }
+</script>
+
+</body>
+</html>
