@@ -7,7 +7,7 @@ Mon projet d'IA locale connectée à un serveur de déploiement continu.
 ## Architecture
 - **GitHub :** Sauvegarde et codage sécurisé.
 - **Serveur Cloud (Unnug) :** Synchro automatique en arrière-plan
-- [Uploading john_ai_paimport os
+- [Uploading john_ai_paimport os]
 
 # Ouvre le tunnel sur le port 11434 (Ollama)
 public_url = ngrok.connect(11434)
