@@ -71,23 +71,20 @@ print("[SÉCURITÉ] : En attente de la signature du Patron...")
 
 @app.route('/ordre_mobile', methods=['POST'])
 def passerelle_v8():
-    donnees = request.get_json() or {}
+donnees = request.get_json() or {}
     
-    # Vérification de la signature du téléphone
-    signature = donnees.get("signature", "")
-    message_patron = donnees.get("ordre", "")
-    
-    if signature != "PATRON_V8_SECURE_TOKEN_99":
-        print("[ALERTE SÉCURITÉ] : Tentative de connexion inconnue refusée.")
-        return jsonify({"statut": "ERREUR", "reponse": "Accès refusé. Appareil non identifié."}), 403
-
-    print(f"\n[SIGNATURE VALIDÉE] -> Le Patron est en ligne.")
-    print(f"[RECONNAISSANCE] -> Message vocal reçu : '{message_patron}'")
-    
-    return jsonify({
-        "statut": "IDÉES REMISES AU CLAIR",
-        "reponse": f"Toutes les IA sont connectées, patron. Ordre reçu : {message_patron}"
-    })
+ # Vérification de la signature du téléphone
+signature = donnees.get("signature", "")
+message_patron = donnees.get("ordre", "")
+if signature != "PATRON_V8_SECURE_TOKEN_99":
+print("[ALERTE SÉCURITÉ] : Tentative de connexion inconnue refusée.")
+return jsonify({"statut": "ERREUR", "reponse": "Accès refusé. Appareil non identifié."}), 403
+print(f"\n[SIGNATURE VALIDÉE] -> Le Patron est en ligne.")
+print(f"[RECONNAISSANCE] -> Message vocal reçu : '{message_patron}'")
+return jsonify({
+"statut": "IDÉES REMISES AU CLAIR",
+ "reponse": f"Toutes les IA sont connectées, patron. Ordre reçu : {message_patron}"
+ })
 [sisi.py](https://github.com/user-attachments/files/30625666/sisi.py)
 [texte.py](https://github.com/user-attachments/files/30625667/texte.py)
 [profil_voix_patron.wav](https://github.com/user-attachments/files/30625687/profil_voix_patron.wav)
