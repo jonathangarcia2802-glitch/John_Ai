@@ -70,7 +70,7 @@ import requests
 class JohnAI:
     def __init__(self):
         # Ta clé API réintégrée proprement et en sécurité
-        self.cle_api = "AQ.Ab8rn6JZR9jf79nKqkdsjtcj9zipls1gk9s48gey3p3hfhyokq" 
+        self.cle_api = "" 
         
         self.fichier_memoire = "memoire_vive.txt"
         
