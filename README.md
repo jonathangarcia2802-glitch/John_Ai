@@ -36,7 +36,7 @@ def passerelle_v8():
     return jsonify({
         "statut": "IDÉES REMISES AU CLAIR",
         "reponse": f"Toutes les IA sont connectées, patron. Ordre reçu : {message_patron}"
-    })
+    
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=False)sserelle2_privee.py…]()
