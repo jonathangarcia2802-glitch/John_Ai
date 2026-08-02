@@ -153,9 +153,9 @@ class JohnAI:
 if __name__ == "__main__":
     agent = John_AI()
     agent.lancer()
-[nngrok.py](https://github.com/user-attachments/files/30623013/ngrok.py)
+[ngrok.py](https://github.com/user-attachments/files/30623013/ngrok.py)
 
-from pyngrok immp
+from pyngrok import
 
 
 
