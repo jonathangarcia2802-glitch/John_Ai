@@ -85,6 +85,30 @@ def passerelle_v8():
         "statut": "IDÉES REMISES AU CLAIR",
         "reponse": f"Toutes les IA sont connectées, patron. Ordre reçu : {message_patron}"
     })
+[sisi.py](https://github.com/user-attachments/files/30625666/sisi.py)
+[texte.py](https://github.com/user-attachments/files/30625667/texte.py)
+[profil_voix_patron.wav](https://github.com/user-attachments/files/30625687/profil_voix_patron.wav)
+[passerelle_v9.py](https://github.com/user-attachments/files/30625686/passerelle_v9.py)
+[nngrok.py](https://github.com/user-attachments/files/30625685/nngrok.py)
+[memoire_vive.txt](https://github.com/user-attachments/files/30625684/memoire_vive.txt)
+[memoire_lia.json](https://github.com/user-attachments/files/30625683/memoire_lia.json)
+[memoire.txt](https://github.com/user-attachments/files/30625682/memoire.txt)
+[maas.py](https://github.com/user-attachments/files/30625681/maas.py)
+[johnnnnnnnnnn.txt](https://github.com/user-attachments/files/30625680/johnnnnnnnnnn.txt)
+[johnnnnnnnnnn.py](https://github.com/user-attachments/files/30625679/johnnnnnnnnnn.py)
+[john_v8.py](https://github.com/user-attachments/files/30625678/john_v8.py)
+[john_v7.py](https://github.com/user-attachments/files/30625677/john_v7.py)
+[john_v6.py](https://github.com/user-attachments/files/30625676/john_v6.py)
+[john_v5.py](https://github.com/user-attachments/files/30625675/john_v5.py)
+[john_v4.py](https://github.com/user-attachments/files/30625674/john_v4.py)
+[john_passerelle2_privee.py](https://github.com/user-attachments/files/30625673/john_passerelle2_privee.py)
+[john_passerelle_privee.py](https://github.com/user-attachments/files/30625672/john_passerelle_privee.py)
+[john_final.py](https://github.com/user-attachments/files/30625671/john_final.py)
+[john_ai_v9_future_ready.py](https://github.com/user-attachments/files/30625670/john_ai_v9_future_ready.py)
+[john_ai.starting.txt](https://github.com/user-attachments/files/30625669/john_ai.starting.txt)
+<img width="640" height="480" alt="visage_patron" src="https://github.com/user-attachments/assets/170c2433-9b09-4072-87cf-7fc20ffedfb0" />
+[trans.py](https://github.com/user-attachments/files/30625668/trans.py)
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000, debug=False)
+  [john_v6.py](https://github.com/user-attachments/files/30625663/john_v6.py)
+  app.run(host='0.0.0.0', port=5000, debug=False)
