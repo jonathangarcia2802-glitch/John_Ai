@@ -5,7 +5,7 @@ Mon projet d'IA locale connectée à un serveur de déploiement continu.
 ## Architecture
 - **GitHub :** Sauvegarde et codage sécurisé.
 - **Serveur Cloud (Unnug) :** Synchro automatique en arrière-plan
-- [Uploading john-ai_paimport os
+- [Uploading john_ai_paimport os
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 
@@ -19,6 +19,7 @@ print("[PROTOCOLE] : Chiffrement d'identification automatique activé.")
 print("[SÉCURITÉ] : En attente de la signature du Patron...")
 
 @app.route('/ordre_mobile', methods=['POST'])
+
 def passerelle_v8():
     donnees = request.get_json() or {}
     
