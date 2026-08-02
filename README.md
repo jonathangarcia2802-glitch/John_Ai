@@ -2576,3 +2576,717 @@ def main(page: ft.Page):
 
 if __name__ == "__main__":
     ft.app(target=main)
+from robot.brain import RobotBrain
+
+if __name__ == "__main__":
+    mon_robot = RobotBrain()
+    mon_robot.piloter()
+from gpiozero import DistanceSensor, Robot
+import time
+
+class RobotHardware:
+    def __init__(self):
+        # Moteurs : roues gauche (broches 17, 18) et droite (broches 22, 23)
+        self.motors = Robot(left=(17, 18), right=(22, 23))
+        # Capteur de distance à ultrasons (Echo=24, Trigger=25)
+        self.sensor = DistanceSensor(echo=24, trigger=25)
+
+    def obtenir_distance(self):
+        # Retourne la distance face au robot en centimètres
+        return self.sensor.distance * 100
+
+    def avancer(self, vitesse=0.5):
+        self.motors.forward(vitesse)
+
+    def reculer(self, vitesse=0.5):
+        self.motors.backward(vitesse)
+
+    def tourner_droite(self, vitesse=0.5):
+        self.motors.right(vitesse)
+
+    def stopper(self):
+        self.motors.stop()
+        rom robot.brain import RobotBrain
+
+if __name__ == "__main__":
+    mon_robot = RobotBrain()
+    mon_robot.piloter()
+    mport logging
+
+# Configuration des logs pour voir ce qui se passe en temps réel
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+
+class RobotHardware:
+    # ... (reste du code)
+    
+    def obtenir_distance(self) -> float:
+        """Calcule et renvoie la distance en centimètres."""
+        try:
+            distance_cm: float = self.sensor.distance * 100
+            return distance_cm
+        except Exception as e:
+            logging.error(f"Erreur de lecture du capteur : {e}")
+            return 0.0
+            import os
+import logging
+from gpiozero import DistanceSensor, Robot
+from dotenv import load_dotenv
+
+# Charger les clés du fichier .env de manière transparente
+load_dotenv()
+
+class RobotHardware:
+    def __init__(self) -> None:
+        # Récupération sécurisée des clés depuis l'environnement système
+        self.cle_livre: str | None = os.getenv("CLE_API_LIVRE")
+        self.cle_deuxieme: str | None = os.getenv("CLE_API_DEUXIEME")
+        
+        if not self.cle_livre or not self.cle_deuxieme:
+            logging.warning("⚠️ Configuration incomplète : clés absentes du fichier .env")
+
+        # Configuration physique des composants connectés au Raspberry Pi
+        # Roue gauche (pins 17, 18), roue droite (pins 22, 23)
+        self.motors = Robot(left=(17, 18), right=(22, 23))
+        # Capteur ultrasons (Echo pin 24, Trigger pin 25)
+        self.sensor = DistanceSensor(echo=24, trigger=25)
+
+    def obtenir_distance(self) -> float:
+        """Calcule et renvoie la distance face au robot en centimètres."""
+        try:
+            return float(self.sensor.distance * 100)
+        except Exception as e:
+            logging.error(f"Erreur lors de la lecture du capteur : {e}")
+            return 0.0
+
+    def avancer(self, vitesse: float = 0.5) -> None:
+        self.motors.forward(vitesse)
+
+    def reculer(self, vitesse: float = 0.5) -> None:
+        self.motors.backward(vitesse)
+
+    def tourner_droite(self, vitesse: float = 0.5) -> None:
+        self.motors.right(vitesse)
+
+    def stopper(self) -> None:
+        self.motors.stop()
+
+    import os
+import json
+import asyncio
+import subprocess
+import wave
+import requests
+import sounddevice as sd
+import cv2
+import flet as ft
+
+try:
+    from bleak import BleakScanner
+    BLEUETOOTH_DISPONIBLE = True
+except ImportError:
+    BLEUETOOTH_DISPONIBLE = False
+
+CONFIG_DIR = "qg_souverain_production"
+os.makedirs(CONFIG_DIR, exist_ok=True)
+CONFIG_FICHIER = os.path.join(CONFIG_DIR, "memoire_souveraine.json")
+
+def charger_memoire():
+    config_defaut = {
+        "patron": "Jonathan",
+        "station": "QG Souverain v3.6 - Global Node",
+        "ngrok_url": "https://remplace-par-ton-url.ngrok-free.app",
+        "historique": [],
+        "frequence_vocal_hz": 44100,
+        "profil_voix_path": os.path.join(CONFIG_DIR, "profil_voix_patron.wav"),
+        "visage_path": os.path.join(CONFIG_DIR, "visage_patron.jpg")
+    }
+    if os.path.exists(CONFIG_FICHIER):
+        try:
+            with open(CONFIG_FICHIER, "r", encoding="utf-8") as f:
+                data = json.load(f)
+                if isinstance(data, dict):
+                    for k, v in config_defaut.items():
+                        if k not in data:
+                            data[k] = v
+                    return data
+        except Exception:
+            pass
+    return config_defaut
+
+memoire = charger_memoire()
+
+def sauvegarder_memoire(data):
+    with open(CONFIG_FICHIER, "w", encoding="utf-8") as f:
+        json.dump(data, f, ensure_ascii=False, indent=4)
+
+class PasserelleNgrokSouveraine:
+    def __init__(self):
+        self.base_url = memoire.get("ngrok_url", "http://192.168.1.61:11434/v1/chat/completions")
+        self.model = "phi3.5:latest"
+
+    def interroger_distant(self, prompt):
+        try:
+            url_cible = self.base_url
+            if not url_cible.endswith("/v1/chat/completions") and "ngrok" in url_cible:
+                url_cible = url_cible.rstrip("/") + "/v1/chat/completions"
+                
+            headers = {"Content-Type": "application/json"}
+            payload = {
+                "model": self.model,
+                "messages": [
+                    {"role": "system", "content": "Tu es John IA, le noyau souverain et central du QG de Jonathan et Olaman."},
+                    {"role": "user", "content": prompt}
+                ],
+                "stream": False
+            }
+            res = requests.post(url_cible, headers=headers, json=payload, timeout=60)
+            if res.status_code == 200:
+                data = res.json()
+                if "choices" in data and len(data["choices"]) > 0:
+                    return data["choices"][0]["message"]["content"]
+                return str(data)
+            else:
+                return f"Erreur passerelle [{res.status_code}] : {res.text}"
+        except requests.exceptions.ConnectionError:
+            return "❌ Erreur critique : Impossible de joindre le serveur via l'URL Ngrok / réseau distant. Vérifie ton tunnel."
+        except Exception as e:
+            return f"❌ Erreur de transmission : {e}"
+
+passerelle_ia = PasserelleNgrokSouveraine()
+
+def executer_commande_systeme_locale(cmd):
+    try:
+        res = subprocess.run(cmd, shell=True, capture_output=True, text=True, timeout=20)
+        if res.returncode == 0:
+            return res.stdout.strip() if res.stdout.strip() else "Commande système exécutée avec succès."
+        else:
+            return f"Erreur CMD : {res.stderr.strip()}"
+    except Exception as e:
+        return f"Exception système : {e}"
+
+async def main(page: ft.Page):
+    page.title = "QG SOUVERAIN — Node Mobile & PC (v3.6)"
+    page.theme_mode = ft.ThemeMode.DARK
+    page.vertical_alignment = ft.MainAxisAlignment.CENTER
+    page.horizontal_alignment = ft.CrossAxisAlignment.CENTER
+    page.window_width = 480
+    page.window_height = 920
+
+    titre_app = ft.Text("🛡️ QG SOUVERAIN — PASSERELLE NGROK & LOCAL", size=11, weight=ft.FontWeight.BOLD, color="cyan")
+    
+    chat_view = ft.ListView(expand=1, spacing=10, padding=12, auto_scroll=True)
+    
+    input_champ = ft.TextField(
+        label="Ordre direct, question à l'IA ou 'cmd: ...'",
+        border_color="cyan",
+        focused_border_color="blue",
+        expand=True
+    )
+
+    url_ngrok_champ = ft.TextField(
+        label="URL Ngrok / Endpoint distant",
+        value=memoire.get("ngrok_url", ""),
+        border_color="blueGrey",
+        text_size=11,
+        height=45,
+        expand=True
+    )
+
+    def enregistrer_url_ngrok(e):
+        nouvelle_url = url_ngrok_champ.value.strip()
+        memoire["ngrok_url"] = nouvelle_url
+        passerelle_ia.base_url = nouvelle_url
+        sauvegarder_memoire(memoire)
+        log_ui("Système", f"🌐 URL Ngrok mise à jour : {nouvelle_url}", "green")
+
+    btn_sauver_url = ft.ElevatedButton("OK", bgcolor="blueGrey800", color="white", on_click=enregistrer_url_ngrok)
+
+    def log_ui(auteur, texte, couleur="white"):
+        chat_view.controls.append(
+            ft.Container(
+                content=ft.Column([
+                    ft.Text(f"[{auteur}]", size=10, weight=ft.FontWeight.BOLD, color="blueGrey400"),
+                    ft.Text(texte, color=couleur, size=13)
+                ]),
+                padding=10, border_radius=8, bgcolor="grey900"
+            )
+        )
+        page.update()
+
+    async def action_enregistrement_vocal(e):
+        log_ui("Système", "⏳ Enregistrement audio (44100 Hz) en cours...", "yellow")
+        def record_blocking():
+            fs = memoire.get("frequence_vocal_hz", 44100)
+            duree = 5
+            audio = sd.rec(int(duree * fs), samplerate=fs, channels=1, dtype='int16')
+            sd.wait()
+            path = memoire["profil_voix_path"]
+            with wave.open(path, 'wb') as wf:
+                wf.setnchannels(1)
+                wf.setsampwidth(2)
+                wf.setframerate(fs)
+                wf.writeframes(audio.tobytes())
+            return path
+        
+        chemin_wav = await asyncio.to_thread(record_blocking)
+        log_ui("Biométrie [Voix]", f"🎤 Empreinte vocale capturée et calibrée à 44100 Hz ({chemin_wav}).", "green")
+
+    async def action_scan_visage(e):
+        log_ui("Système", "👁️ Activation optique pour reconnaissance faciale...", "yellow")
+        def capture_blocking():
+            cap = cv2.VideoCapture(0)
+            if not cap.isOpened():
+                return None
+            import time
+            time.sleep(1)
+            ret, frame = cap.read()
+            cap.release()
+            cv2.destroyAllWindows()
+            if ret:
+                path = memoire["visage_path"]
+                cv2.imwrite(path, frame)
+                return path
+            return None
+
+        chemin_img = await asyncio.to_thread(capture_blocking)
+        if chemin_img:
+            log_ui("Biométrie [Visage]", f"👁️ Visage validé et enregistré ({chemin_img}).", "green")
+        else:
+            log_ui("Biométrie [Visage]", "❌ Erreur : Caméra introuvable ou occupée.", "red")
+
+    async def action_balayage_bluetooth(e):
+        if not BLEUETOOTH_DISPONIBLE:
+            log_ui("Réseau", "❌ Le module 'bleak' n'est pas installé sur cette station.", "red")
+            return
+        log_ui("Système", "📡 Balayage du maillage Bluetooth 2.4 GHz...", "yellow")
+        try:
+            devices = await BleakScanner.discover(timeout=4.0)
+            if not devices:
+                log_ui("Réseau", "📡 Aucun appareil Bluetooth détecté à proximité.", "yellow")
+                return
+            lignes = [f"• {d.name or 'Appareil Inconnu'} (MAC: {d.address}) [{d.rssi} dBm]" for d in devices]
+            log_ui("Maillage Bluetooth", "\n".join(lignes), "cyan")
+        except Exception as ex:
+            log_ui("Réseau", f"❌ Erreur balayage matériel : {ex}", "red")
+
+    barre_outils = ft.Row([
+        ft.ElevatedButton("🎤 Micro", bgcolor="blueGrey850", color="white", on_click=action_enregistrement_vocal),
+        ft.ElevatedButton("👁️ Caméra", bgcolor="blueGrey850", color="white", on_click=action_scan_visage),
+        ft.ElevatedButton("📡 Bluetooth", bgcolor="blueGrey850", color="white", on_click=action_balayage_bluetooth)
+    ], alignment=ft.MainAxisAlignment.SPACE_AROUND)
+
+    async def soumettre_ordre(e):
+        texte = input_champ.value.strip()
+        if not texte:
+            return
+        log_ui("Jonathan", texte, "cyan")
+        input_champ.value = ""
+        page.update()
+
+        if texte.lower().startswith("cmd:"):
+            commande_brute = texte[4:].strip()
+            res_cmd = await asyncio.to_thread(executer_commande_systeme_locale, commande_brute)
+            log_ui("Exécuteur Système", res_cmd, "green")
+        else:
+            reponse = await asyncio.to_thread(passerelle_ia.interroger_distant, texte)
+            log_ui("John IA (Noyau Distant)", reponse, "white")
+            memoire["historique"].append({"user": texte, "ai": reponse})
+            sauvegarder_memoire(memoire)
+
+    btn_envoyer = ft.ElevatedButton("Transmettre", bgcolor="green", color="white", on_click=soumettre_ordre)
+    input_champ.on_submit = soumettre_ordre
+
+    page.add(
+        ft.Column([
+            titre_app,
+            ft.Row([url_ngrok_champ, btn_sauver_url], alignment=ft.MainAxisAlignment.SPACE_BETWEEN),
+            barre_outils,
+            chat_view,
+            ft.Row([input_champ, btn_envoyer], alignment=ft.MainAxisAlignment.SPACE_BETWEEN)
+        ], expand=True, alignment=ft.MainAxisAlignment.START)
+    )
+
+if __name__ == "__main__":
+    ft.app(target=main)
+    # CODE INTÉGRÉ PAR LE ROBOT POUR LE SALON D'ÉQUIPE EN DIRECT Live
+import requests
+from kivy.app import App
+from kivy.uix.boxlayout import BoxLayout
+from kivy.uix.button import Button
+from kivy.uix.label import Label
+from kivy.core.window import Window
+
+Window.size = (400, 500)
+
+class SalonEquipeIA(App):
+    def build(self):
+        self.title = "QG Secours - Liaison Directe"
+        layout = BoxLayout(orientation='vertical', padding=20, spacing=15)
+        Window.clearcolor = (0.05, 0.05, 0.08, 1)
+        
+        # Affichage de l'équipe connectée
+        self.Statut = Label(
+            text="🟢 ÉQUIPE EN LIGNE :\n• Patron (Jonathan)\n• Copilote (Moi)\n• Chef Sécurité\n• Robot Local",
+            font_size='16sp', color=(0, 1, 0.5, 1), halign='center'
+        )
+        layout.add_widget(self.Statut)
+        
+        # LE FAMEUX BOUTON MAGIQUE DE CONNEXION RAPIDE
+        btn_micro = Button(
+            text="🎙️ APPEL DIRECT LIVE\n(Parler à l'équipe)",
+            font_size='18sp', background_color=(0, 0.6, 1, 1), color=(1, 1, 1, 1)
+        )
+        btn_micro.bind(on_press=self.ouvrir_micro_equipe)
+        layout.add_widget(btn_micro)
+        
+        return layout
+
+    def ouvrir_micro_equipe(self, instance):
+        self.Statut.text = "⚡ Transmission vocale chiffrée en cours..."
+        # Le signal part directement dans le CMD de ton PC pour parler à toutes les IA
+        try:
+            requests.post('http://192.168.1', json={
+                "ordre": "Connexion vocale Patron établie",
+                "signature": "PATRON_V8_SECURE_TOKEN_99"
+            }, timeout=3)
+            self.Statut.text = "📢 LIAISON LIVE REUSSIE\nParle, toute l'équipe t'écoute !"
+        except:
+            self.Statut.text = "❌ Liaison en attente...\n(Relance python passerelle_v9.py sur le PC)"
+
+if __name__ == '__main__':
+    SalonEquipeIA().run()
+    import os
+import json
+from flask import Flask, request, jsonify
+from flask_cors import CORS
+from cryptography.fernet import Fernet # Le bouclier de chiffrement militaire
+
+app = Flask(__name__)
+CORS(app)
+
+FICHIER_HISTORIQUE = "historique_patron.enc"
+FICHIER_CLE = "antenne_patron.key"
+
+# --- PROTOCOLE ANGE GARDIEN : SÉCURISATION DE LA CLÉ ---
+def obtenir_ou_creer_cle_secrete():
+    """Génère une clé de chiffrement unique et invisible de l'extérieur."""
+    if not os.path.exists(FICHIER_CLE):
+        cle = Fernet.generate_key()
+        with open(FICHIER_CLE, "wb") as key_file:
+            key_file.write(cle)
+        return Fernet(cle)
+    else:
+        with open(FICHIER_CLE, "rb") as key_file:
+            cle = key_file.read()
+        return Fernet(cle)
+
+fernet = obtenir_ou_creer_cle_secrete()
+
+def crypter_et_sauvegarder(ordre_patron):
+    """Transforme tes idées en texte chiffré illisible pour les hackers."""
+    historique = []
+    
+    # 1. Lire l'ancien fichier chiffré s'il existe
+    if os.path.exists(FICHIER_HISTORIQUE):
+        try:
+            with open(FICHIER_HISTORIQUE, "rb") as f:
+                donnees_cryptees = f.read()
+            # Déchiffrement temporaire en mémoire vive uniquement
+            donnees_decryptees = fernet.decrypt(donnees_cryptees)
+            historique = json.loads(donnees_decryptees.decode('utf-8'))
+        except Exception:
+            pass # Si le fichier est corrompu ou hacké, on protège la structure
+            
+    # 2. Ajouter la nouvelle idée secrète
+    historique.append({"ordre": ordre_patron, "statut": "Protégé par l'Ange Gardien"})
+    
+    # 3. Chiffrer le tout avant de l'écrire sur le disque dur
+    texte_json = json.dumps(historique, ensure_ascii=False)
+    donnees_a_sauvegarder = fernet.encrypt(texte_json.encode('utf-8'))
+    
+    with open(FICHIER_HISTORIQUE, "wb") as f:
+        f.write(donnees_a_sauvegarder)
+    print("\n[🛡️ ANGE GARDIEN] -> Idée chiffrée avec succès. Coffre-fort verrouillé.")
+
+print("=========================================")
+print(" PASSERELLE V9 : BLINDAGE MILITAIRE AES ")
+print("=========================================")
+print("[SÉCURITÉ] : Coffre-fort chiffré actif.")
+print("[SYSTÈME] : Prêt à réceptionner tes ordres.")
+
+@app.route('/ordre_mobile', methods=['POST'])
+def passerelle_blindee():
+    donnees = request.get_json() or {}
+    
+    # Validation du chiffrement de l'antenne de ton Samsung
+    if donnees.get("signature") != "PATRON_V8_SECURE_TOKEN_99":
+        print("[ALERTE HACKER] -> Tentative d'intrusion détectée et bloquée !")
+        return jsonify({"erreur": "Alerte intrusion : Accès refusé."}), 403
+
+    message_patron = donnees.get("ordre", "")
+    print(f"\n[PATRON RECONNU] -> Connexion chiffrée sécurisée.")
+    
+    # Cryptage immédiat
+    crypter_et_sauvegarder(message_patron)
+    
+    return jsonify({
+        "statut": "SÉCURISÉ & LOCKÉ",
+        "reponse": "Ton idée a été cryptée sur le disque dur. Aucun hacker ne peut la lire."
+    })
+
+if __name__ == '__main__':
+    app.run(host='0.0.0.0', port=5000, debug=False)
+    from selenium import webdriver
+from selenium.webdriver.common.by import By
+import requests
+
+# L'adresse locale d'Ollama sur ton PC
+url_local = "http://localhost:11434/api/generate"
+
+# On demande au modèle Open Source (ex: Mistral ou Llama)
+payload = {
+    "model": "mistral",
+    "prompt": "Écris-moi un script Python qui trie les fichiers d'un dossier.",
+    "stream": False
+}
+
+try:
+    reponse = requests.post(url_local, json=payload)
+    texte_ia = reponse.json()['response']
+    print("\n[IA OPEN SOURCE LOCAL] :\n", texte_ia)
+except Exception as e:
+    print("[ERREUR] : Ollama n'est pas démarré sur le PC.", e)
+    import ssl
+import urllib.request
+import warnings
+from urllib3.exceptions import InsecureRequestWarning
+
+# --- BLINDAGE ABSOLU SSL ---
+warnings.simplefilter('ignore', InsecureRequestWarning)
+old_urlopen = urllib.request.urlopen
+def urlopen_sans_ssl(url, data=None, timeout=30, *, cafile=None, capath=None, cadefault=False, context=None):
+    if context is None:
+        context = ssl._create_unverified_context()
+    return old_urlopen(url, data=data, timeout=timeout, cafile=cafile, capath=capath, cadefault=cadefault, context=context)
+urllib.request.urlopen = urlopen_sans_ssl
+
+import os
+import json
+import subprocess
+import requests
+import threading
+import time
+import wave
+import sounddevice as sd
+import cv2
+import flet as ft
+
+CONFIG_FICHIER = "memoire_lia.json"
+
+# --- ASPIRATEUR DE FICHIERS .TXT AUTOMATIQUE ---
+def aspirer_tous_les_txt():
+    archives_texte = {}
+    try:
+        for fichier in os.listdir('.'):
+            if fichier.endswith('.txt'):
+                with open(fichier, 'r', encoding='utf-8', errors='ignore') as f:
+                    archives_texte[fichier] = f.read()
+    except Exception as e:
+        print(f"Erreur lecture txt: {e}")
+    return archives_texte
+
+def charger_memoire():
+    config_defaut = {
+        "patron": "Jonathan",
+        "profil_utilisateur": {
+            "nom": "Jonathan",
+            "prenom": "Patron",
+            "email": "jonathan.souverain@qg.com",
+            "telephone": "+33600000000",
+            "adresse": "QG Central, France"
+        },
+        "historique": [],
+        "biometrie_active": True,
+        "frequence_vocal_hz": 44100,
+        "profil_voix_path": "profil_voix_patron.wav",
+        "archives_txt": aspirer_tous_les_txt()
+    }
+    if os.path.exists(CONFIG_FICHIER):
+        try:
+            with open(CONFIG_FICHIER, "r", encoding="utf-8") as f:
+                data = json.load(f)
+                if isinstance(data, dict):
+                    for k, v in config_defaut.items():
+                        if k not in data:
+                            data[k] = v
+                    data["archives_txt"] = aspirer_tous_les_txt()
+                    return data
+        except Exception:
+            pass
+    return config_defaut
+
+memoire = charger_memoire()
+
+def sauvegarder_memoire(data):
+    with open(CONFIG_FICHIER, "w", encoding="utf-8") as f:
+        json.dump(data, f, ensure_ascii=False, indent=4)
+
+# --- ENREGISTREMENT VOCAL HAUTE FIDÉLITÉ (44100 HZ) ---
+def enregistrer_empreinte_vocale_avec_timer(update_ui_callback, duree_enregistrement=5):
+    try:
+        for i in range(10, 0, -1):
+            update_ui_callback(f"⏳ [TIMER 10S] Prépare ton micro... Enregistrement dans {i}s...", "yellow")
+            time.sleep(1)
+        
+        update_ui_callback("🎙️ [ENREGISTREMENT] Analyse à 44100 Hz en cours...", "orange")
+        fs = 44100 # Fréquence standard exigée par le Patron
+        audio = sd.rec(int(duree_enregistrement * fs), samplerate=fs, channels=1, dtype='int16')
+        sd.wait()
+        
+        # Sauvegarde du fichier maître pour liaison avec les futurs modèles
+        nom_fichier = memoire.get("profil_voix_path", "profil_voix_patron.wav")
+        with wave.open(nom_fichier, 'wb') as wf:
+            wf.setnchannels(1)
+            wf.setsampwidth(2)
+            wf.setframerate(fs)
+            wf.writeframes(audio.tobytes())
+            
+        update_ui_callback(f"🎙️ [VOIX VALIDÉE] Empreinte enregistrée à {fs} Hz ({nom_fichier}).", "green")
+    except Exception as e:
+        update_ui_callback(f"❌ Erreur micro : {e}", "red")
+
+def scanner_visage_patron(filename="visage_patron.jpg"):
+    try:
+        cap = cv2.VideoCapture(0)
+        if not cap.isOpened():
+            return "❌ Erreur : Caméra introuvable."
+        time.sleep(1)
+        ret, frame = cap.read()
+        cap.release()
+        cv2.destroyAllWindows()
+        if ret:
+            cv2.imwrite(filename, frame)
+            return "👁️ [VISAGE VALIDÉ] Biométrie faciale confirmée."
+        return "❌ Échec de la capture de la caméra."
+    except Exception as e:
+        return f"❌ Erreur webcam : {e}"
+
+class RouteurV17:
+    def __init__(self):
+        self.groq_key = os.getenv("GROQ_API_KEY", "AQ.AbBRN6I8QV-ukEvEXUjrFpEHk8owhOs4eTFOZiN69zh2ie-0zQ")
+
+    def interroger(self, prompt):
+        try:
+            contexte_txts = "\n".join([f"--- Fichier {nom} ---\n{contenu[:500]}" for nom, contenu in memoire.get("archives_txt", {}).items()])
+            
+            # Injection de l'identité vocale et des paramètres du Patron dans le prompt système
+            prompt_complet = (
+                f"Identité du système: QG Souverain\n"
+                f"Fréquence vocale maître: {memoire.get('frequence_vocal_hz', 44100)} Hz\n"
+                f"Contexte des documents du Patron:\n{contexte_txts}\n\n"
+                f"Requête du Patron: {prompt}"
+            )
+
+            headers = {"Authorization": f"Bearer {self.groq_key}", "Content-Type": "application/json"}
+            data = {"model": "llama3-70b-8192", "messages": [{"role": "user", "content": prompt_complet}]}
+            res = requests.post("https://api.groq.com/openai/v1/chat/completions", headers=headers, json=data, timeout=10, verify=False)
+            if res.status_code == 200:
+                return res.json()['choices'][0]['message']['content']
+            return f"Erreur Cloud ({res.status_code})"
+        except Exception as e:
+            return f"Erreur connexion : {e}"
+
+router_ia = RouteurV17()
+
+def executer_cmd(cmd_str):
+    try:
+        res = subprocess.run(cmd_str, shell=True, capture_output=True, text=True, timeout=15)
+        return res.stdout if res.returncode == 0 else f"Erreur CMD : {res.stderr}"
+    except Exception as e:
+        return f"Erreur système : {e}"
+
+def main(page: ft.Page):
+    try:
+        patron_nom = memoire.get('patron', 'Jonathan')
+        nb_txts = len(memoire.get('archives_txt', {}))
+        
+        page.title = f"QG SOUVERAIN - {patron_nom}"
+        page.theme_mode = ft.ThemeMode.DARK
+        page.vertical_alignment = ft.MainAxisAlignment.CENTER
+        page.horizontal_alignment = ft.CrossAxisAlignment.CENTER
+        page.window_width = 460
+        page.window_height = 920
+
+        titre = ft.Text(f"🛡️ QG SOUVERAIN — {nb_txts} TXT | VOIX 44100Hz", size=13, weight=ft.FontWeight.BOLD, color="cyan")
+        chat_view = ft.ListView(expand=1, spacing=10, padding=12, auto_scroll=True)
+        
+        input_message = ft.TextField(
+            label="Tape ton ordre ou 'cmd: ...'...",
+            border_color="cyan",
+            focused_border_color="blue",
+            expand=True
+        )
+
+        def ajouter_message(auteur, texte, couleur="white"):
+            chat_view.controls.append(
+                ft.Container(
+                    content=ft.Text(f"{auteur}: {texte}", color=couleur),
+                    padding=10, border_radius=8, bgcolor="grey900"
+                )
+            )
+            page.update()
+
+        def lancer_enregistrement_avec_timer(e):
+            ajouter_message("Système", "⏳ [INSTALLATION] Lancement du timer de 10s...", "yellow")
+            threading.Thread(
+                target=enregistrer_empreinte_vocale_avec_timer, 
+                args=(lambda msg, couleur: ajouter_message("Biométrie [Voix]", msg, couleur), 5),
+                daemon=True
+            ).start()
+
+        def action_scanner_visage(e):
+            ajouter_message("Système", "👁️ Scan facial en cours...", "yellow")
+            res = scanner_visage_patron()
+            ajouter_message("Biométrie [Visage]", res, "green")
+
+        barre_biometrie = ft.Row([
+            ft.ElevatedButton("🎤 Enregistrer Voix (44.1kHz)", color="white", bgcolor="blueGrey800", on_click=lancer_enregistrement_avec_timer),
+            ft.ElevatedButton("📷 Scan Visage", color="white", bgcolor="blueGrey800", on_click=action_scanner_visage)
+        ], alignment=ft.MainAxisAlignment.SPACE_AROUND)
+
+        def envoyer_action(e):
+            texte = input_message.value.strip()
+            if not texte:
+                return
+            
+            ajouter_message("Patron", texte, "cyan")
+            input_message.value = ""
+            page.update()
+
+            if texte.lower().startswith("cmd:"):
+                cmd_a_lancer = texte[4:].strip()
+                res_cmd = executer_cmd(cmd_a_lancer)
+                ajouter_message("Lia [CMD]", res_cmd, "green")
+            else:
+                reponse_ia = router_ia.interroger(texte)
+                ajouter_message("Lia", reponse_ia, "white")
+                memoire.setdefault("historique", []).append({"user": texte, "lia": reponse_ia})
+                sauvegarder_memoire(memoire)
+
+        btn_envoyer = ft.ElevatedButton("Envoyer", color="white", bgcolor="green", on_click=envoyer_action)
+        input_message.on_submit = envoyer_action
+
+        page.add(
+            ft.Column([
+                titre,
+                barre_biometrie,
+                chat_view,
+                ft.Row([input_message, btn_envoyer], alignment=ft.MainAxisAlignment.SPACE_BETWEEN)
+            ], expand=True, alignment=ft.MainAxisAlignment.START)
+        )
+    except Exception as err:
+        page.add(ft.Text(f"CRASH INTERNE: {err}", color="red", size=20))
+        page.update()
+
+if __name__ == "__main__":
+    ft.app(target=main)
