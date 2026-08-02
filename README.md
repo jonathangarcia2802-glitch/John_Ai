@@ -39,7 +39,7 @@ def passerelle_v8():
     
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000, debug=False)sserelle2_privee.py…]()
+    app.run(host='0.0.0.0', port=5000, debug=False)passerelle2_privee.py…]()
 
 import os
 import requests
