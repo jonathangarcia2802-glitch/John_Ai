@@ -54,6 +54,7 @@ pip install python-dotenv
 pip install gpiozero
 python main.py
 pip install litellm hugginface
+
 import os
 from flask import Flask, request, jsonify
 from flask_cors import CORS
@@ -113,6 +114,7 @@ def passerelle_v8():
 if __name__ == '__main__':
   [john_v6.py](https://github.com/user-attachments/files/30625663/john_v6.py)
   app.run(host='0.0.0.0', port=5000, debug=False)
+  
 import os
 import sys
 import subprocess
@@ -130,10 +132,11 @@ def reparer_et_relancer():
     print("[1/3] MÉMOIRE NETTOYÉE : Fenêtres fantômes éliminées.")
 
     # 2. INJECTION DU CODE PARFAIT ET CONFIGURÉ SANS ERREUR
-    cle_api = "AQ.Ab8rn6I8QV-ukEvEXUjrFpEHk8owhOs4eTFOZiN69zh2ie-OzQ"
+    cle_api = "Q"
     url_corrigee = f"https://googleapis.com{cle_api}"
     
     code_propre = f"""import os
+    
 import tkinter as tk
 from tkinter import messagebox, scrolledtext
 import requests
@@ -207,10 +210,7 @@ tk.Label(panel_ia, text=" AGENTS CONNECTÉS ", font=("Courier", 10, "bold"), bg=
 
 frame_john = tk.Frame(panel_ia, bg="#16161e", bd=1, relief="ridge")
 frame_john.pack(fill="x", padx=5, pady=10)
-photo_john = tk.Canvas(frame_john, width=60, height=60, bg="#1a233a", highlightthickness=0)
-photo_john.create_rectangle(10, 10, 50, 50, outline="#00ff00", width=2)
-photo_john.create_text(30, 30, text="JOHN", fill="#00ff00", font=("Courier", 8, "bold"))
-photo_john.pack(side="left", padx=5, pady=5)
+
 
 info_john = tk.Frame(frame_john, bg="#16161e")
 info_john.pack(side="left", fill="both", expand=True, padx=5)
@@ -250,5 +250,5 @@ fenetre.mainloop()
     # Exécute de manière totalement indépendante l'interface corrigée
     subprocess.Popen([sys.executable, "ia_clavier.py"])
 
-if __name__ == "__main__":
+ if __name__ == "__main__":
     reparer_et_relancer()
