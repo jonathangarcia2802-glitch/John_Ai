@@ -3366,3 +3366,60 @@ if __name__ == '__main__':
         
     except Exception as e:
         print(f"[Erreur] Impossible de lier Phi 3.5 à ta mémoire. Vérifie qu'il tourne bien ! ({e})")
+### Script d'Initialisation Automatique et Sécurisé (Arrière-plan)
+
+Ce script se charge de récupérer de manière autonome toutes les clés privées (ngrok, Hugging Face, et clés payantes additionnelles) depuis l'environnement système. Il démarre les tunnels réseau dans un processus invisible en arrière-plan afin de ne pas bloquer l'exécution globale.
+
+```python
+import os
+import time
+import threading
+import requests
+import ngrok
+from huggingface_hub import login
+
+def lancer_services_arriere_plan():
+    print("[INIT] Chargement des clés et démarrage des tunnels masqués...")
+
+    # 1. Récupération invisible et automatique de TOUTES les clés
+    # (Rien n'est écrit en clair pour protéger le dépôt GitHub)
+    NGROK_TOKEN = os.getenv("NGROK_AUTHTOKEN")
+    NGROK_API_KEY_PAYANTE = os.getenv("NGROK_API_KEY") # Récupère ta 2ème clé (Payante/Pro)
+    HF_TOKEN = os.getenv("HF_TOKEN")
+
+    # 2. Configuration de l'authentification Ngrok (Standard + API Pro)
+    if NGROK_TOKEN:
+        ngrok.set_auth_token(NGROK_TOKEN)
+    if NGROK_API_KEY_PAYANTE:
+        # Applique automatiquement les privilèges de ton compte payant
+        ngrok.set_api_key(NGROK_API_KEY_PAYANTE)
+
+    # 3. Liaison invisible à la plateforme Hugging Face
+    if HF_TOKEN:
+        login(token=HF_TOKEN, add_to_git_credential=True)
+
+    try:
+        # 4. Connexion et ouverture simultanée des tunnels
+        # Tunnel principal 1 : Ollama (Port 11434)
+        public_url_ollama = ngrok.connect(11434)
+        
+        # Tunnel principal 2 : Serveur Privé (Port 5000)
+        public_url_prive = ngrok.connect(5000)
+
+        # 5. Déclaration de l'adresse API locale
+        url_local = "http://localhost:11434/api/generate"
+
+        # Les URLs restent accessibles en mémoire mais ne polluent pas les logs publics
+        print("[SUCCÈS] Tous les serveurs et tunnels tournent discrètement en arrière-plan.")
+        
+        # Boucle infinie invisible pour maintenir les tunnels actifs en tâche de fond
+        while True:
+            time.sleep(3600)
+
+    except Exception as e:
+        print(f"[ERREUR] Échec lors du lancement des processus en arrière-plan : {e}")
+
+# Lancement immédiat dans un thread séparé (Invisible / Arrière-plan complet)
+thread_fantome = threading.Thread(target=lancer_services_arriere_plan, daemon=True)
+thread_fantome.start()
+```
