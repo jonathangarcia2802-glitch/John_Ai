@@ -3254,24 +3254,24 @@ def main(page: ft.Page):
             ft.ElevatedButton("📷 Scan Visage", color="white", bgcolor="blueGrey800", on_click=action_scanner_visage)
         ], alignment=ft.MainAxisAlignment.SPACE_AROUND)
 
-        def envoyer_action(e):
-            texte = input_message.value.strip()
-            if not texte:
-                return
+def envoyer_action(e):
+texte = input_message.value.strip()
+if not texte:
+return
             
-            ajouter_message("Patron", texte, "cyan")
-            input_message.value = ""
-            page.update()
+ajouter_message("Patron", texte, "cyan")
+input_message.value = ""
+page.update()
 
-            if texte.lower().startswith("cmd:"):
-                cmd_a_lancer = texte[4:].strip()
-                res_cmd = executer_cmd(cmd_a_lancer)
-                ajouter_message("Lia [CMD]", res_cmd, "green")
-            else:
-                reponse_ia = router_ia.interroger(texte)
-                ajouter_message("Lia", reponse_ia, "white")
-                memoire.setdefault("historique", []).append({"user": texte, "lia": reponse_ia})
-                sauvegarder_memoire(memoire)
+if texte.lower().startswith("cmd:")
+cmd_a_lancer = texte[4:].strip()
+res_cmd = executer_cmd(cmd_a_lancer)
+ajouter_message("Lia [CMD]", res_cmd, "green")
+else:
+reponse_ia = router_ia.interroger(texte)
+ajouter_message("Lia", reponse_ia, "white")
+memoire.setdefault("historique", []).append({"user": texte, "lia": reponse_ia})
+sauvegarder_memoire(memoire)
 
         btn_envoyer = ft.ElevatedButton("Envoyer", color="white", bgcolor="green", on_click=envoyer_action)
         input_message.on_submit = envoyer_action
