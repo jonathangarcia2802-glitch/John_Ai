@@ -152,9 +152,9 @@ class JohnAI:
                 break
 
 if __name__ == "__main__":
-    agent = JohnAI()
+    agent = John_AI()
     agent.lancer()
-[nngrok.py](https://github.com/user-attachments/files/30623013/nngrok.py)
+[nngrok.py](https://github.com/user-attachments/files/30623013/ngrok.py)
 
 from pyngrok immp
 
