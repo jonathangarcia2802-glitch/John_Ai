@@ -41,9 +41,8 @@ def passerelle_v8():
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=False)passerelle2_privee.py…]()
 
-import os
-import requests
-
+    import os
+    import request
 def verifier_connexion_systeme():
     print("--- VÉRIFICATION DES CONNEXIONS (PORT 5000) ---")
     
