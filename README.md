@@ -24,7 +24,6 @@ payload = {
 "prompt": "Écris-moi un script Python qui trie les fichiers d'un dossier.",
 "stream": False
 }
-
 try:
 reponse = requests.post(url_local, json=payload)
 texte_ia = reponse.json()['response']
