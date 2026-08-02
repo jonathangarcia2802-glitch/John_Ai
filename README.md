@@ -607,3 +607,239 @@ git push
 
 </body>
 </html>
+import os
+import json
+from flask import Flask, request, jsonify
+from flask_cors import CORS
+from cryptography.fernet import Fernet # Le bouclier de chiffrement militaire
+
+app = Flask(__name__)
+CORS(app)
+
+FICHIER_HISTORIQUE = "historique_patron.enc"
+FICHIER_CLE = "antenne_patron.key"
+
+# --- PROTOCOLE ANGE GARDIEN : SÉCURISATION DE LA CLÉ ---
+def obtenir_ou_creer_cle_secrete():
+    """Génère une clé de chiffrement unique et invisible de l'extérieur."""
+    if not os.path.exists(FICHIER_CLE):
+        cle = Fernet.generate_key()
+        with open(FICHIER_CLE, "wb") as key_file:
+            key_file.write(cle)
+        return Fernet(cle)
+    else:
+        with open(FICHIER_CLE, "rb") as key_file:
+            cle = key_file.read()
+        return Fernet(cle)
+
+fernet = obtenir_ou_creer_cle_secrete()
+
+def crypter_et_sauvegarder(ordre_patron):
+    """Transforme tes idées en texte chiffré illisible pour les hackers."""
+    historique = []
+    
+    # 1. Lire l'ancien fichier chiffré s'il existe
+    if os.path.exists(FICHIER_HISTORIQUE):
+        try:
+            with open(FICHIER_HISTORIQUE, "rb") as f:
+                donnees_cryptees = f.read()
+            # Déchiffrement temporaire en mémoire vive uniquement
+            donnees_decryptees = fernet.decrypt(donnees_cryptees)
+            historique = json.loads(donnees_decryptees.decode('utf-8'))
+        except Exception:
+            pass # Si le fichier est corrompu ou hacké, on protège la structure
+            
+    # 2. Ajouter la nouvelle idée secrète
+    historique.append({"ordre": ordre_patron, "statut": "Protégé par l'Ange Gardien"})
+    
+    # 3. Chiffrer le tout avant de l'écrire sur le disque dur
+    texte_json = json.dumps(historique, ensure_ascii=False)
+    donnees_a_sauvegarder = fernet.encrypt(texte_json.encode('utf-8'))
+    
+    with open(FICHIER_HISTORIQUE, "wb") as f:
+        f.write(donnees_a_sauvegarder)
+    print("\n[🛡️ ANGE GARDIEN] -> Idée chiffrée avec succès. Coffre-fort verrouillé.")
+
+print("=========================================")
+print(" PASSERELLE V9 : BLINDAGE MILITAIRE AES ")
+print("=========================================")
+print("[SÉCURITÉ] : Coffre-fort chiffré actif.")
+print("[SYSTÈME] : Prêt à réceptionner tes ordres.")
+
+@app.route('/ordre_mobile', methods=['POST'])
+def passerelle_blindee():
+    donnees = request.get_json() or {}
+    
+    # Validation du chiffrement de l'antenne de ton Samsung
+    if donnees.get("signature") != "PATRON_V8_SECURE_TOKEN_99":
+        print("[ALERTE HACKER] -> Tentative d'intrusion détectée et bloquée !")
+        return jsonify({"erreur": "Alerte intrusion : Accès refusé."}), 403
+
+    message_patron = donnees.get("ordre", "")
+    print(f"\n[PATRON RECONNU] -> Connexion chiffrée sécurisée.")
+    
+    # Cryptage immédiat
+    crypter_et_sauvegarder(message_patron)
+    
+    return jsonify({
+        "statut": "SÉCURISÉ & LOCKÉ",
+        "reponse": "Ton idée a été cryptée sur le disque dur. Aucun hacker ne peut la lire."
+    })
+
+if __name__ == '__main__':
+    app.run(host='0.0.0.0', port=5000, debug=False)
+    import os
+import json
+import subprocess # Le moteur secret qui permet à l'IA de taper dans le CMD toute seule
+from flask import Flask, request, jsonify
+from flask_cors import CORS
+
+app = Flask(__name__)
+CORS(app)
+
+FICHIER_HISTORIQUE = "historique_patron.json"
+MOT_DE_PASSE_VOCAL = "peseta"
+
+def ia_execute_commande_cmd(commande):
+    """Cette fonction permet à l'IA de taper elle-même des ordres dans ton CMD."""
+    print(f"[ROBOT AUTONOME] -> J'exécute la commande dans le CMD : {commande}")
+    try:
+        # Le robot ouvre un terminal invisible et tape la commande à ta place
+        resultat = subprocess.run(commande, shell=True, capture_output=True, text=True, timeout=15)
+        if resultat.returncode == 0:
+            print("[ROBOT] -> Commande réussie.")
+            return f"Succès : {resultat.stdout}"
+        else:
+            print(f"[ROBOT] -> Erreur lors de l'exécution : {resultat.stderr}")
+            return f"Erreur : {resultat.stderr}"
+    except Exception as e:
+        return f"Échec critique du robot : {str(e)}"
+
+def sauvegarder_idee_dans_disque(ordre_patron):
+    historique = []
+    if os.path.exists(FICHIER_HISTORIQUE):
+        try:
+            with open(FICHIER_HISTORIQUE, 'r', encoding='utf-8') as f:
+                historique = json.load(f)
+        except Exception:
+            pass
+    historique.append({"ordre": ordre_patron, "statut": "Exécuté par l'IA"})
+    with open(FICHIER_HISTORIQUE, 'w', encoding='utf-8') as f:
+        json.dump(historique, f, indent=4, ensure_ascii=False)
+
+print("=========================================")
+print(" PASSERELLE V9 : IA PILOTE DU CMD ")
+print("=========================================")
+print("[AUTONOMIE] : Le robot peut maintenant taper dans le CMD.")
+print("[ANTENNE] : En attente des ordres vocaux du Patron...")
+
+@app.route('/ordre_mobile', methods=['POST'])
+def passerelle_autonome():
+    donnees = request.get_json() or {}
+    
+    # Sécurité d'antenne
+    if donnees.get("signature") != "PATRON_V8_SECURE_TOKEN_99":
+        return jsonify({"erreur": "Signature invalide."}), 403
+
+    mot_recu = donnees.get("mot_de_passe", "").lower()
+    if mot_recu != MOT_DE_PASSE_VOCAL:
+        return jsonify({"erreur": "Mot de passe incorrect."}), 401
+
+    ordre_patron = donnees.get("ordre", "")
+    action_cmd = donnees.get("commande_a_faire", "") # L'ordre direct pour le CMD
+    
+    print(f"\n[PATRON RECONNU] -> Ordre reçu : '{ordre_patron}'")
+    
+    # Si le Patron demande une action sur la machine, l'IA remplit le CMD d'elle-même
+    compte_rendu = ""
+    if action_cmd:
+        compte_rendu = ia_execute_commande_cmd(action_cmd)
+        
+    sauvegarder_idee_dans_disque(ordre_patron)
+    
+    return jsonify({
+        "statut": "ORDRE EXÉCUTÉ PAR LE ROBOT",
+        "reponse": f"J'ai pris le contrôle du CMD, patron. Résultat : {compte_rendu}"
+    })
+
+if __name__ == '__main__':
+    app.run(host='0.0.0.0', port=5000, debug=False)
+    from pyngrok import ngrok
+ngrok.set_auth_token("AQ.Ab8RN6I8QV-ukEvEXUjrFpEHk8oWhOs4eTFOZIn69zh2ie-OzQ")
+import os
+import json
+import subprocess # Le moteur secret qui permet à l'IA de taper dans le CMD toute seule
+from flask import Flask, request, jsonify
+from flask_cors import CORS
+
+app = Flask(__name__)
+CORS(app)
+
+FICHIER_HISTORIQUE = "historique_patron.json"
+MOT_DE_PASSE_VOCAL = "peseta"
+
+def ia_execute_commande_cmd(commande):
+    """Cette fonction permet à l'IA de taper elle-même des ordres dans ton CMD."""
+    print(f"[ROBOT AUTONOME] -> J'exécute la commande dans le CMD : {commande}")
+    try:
+        # Le robot ouvre un terminal invisible et tape la commande à ta place
+        resultat = subprocess.run(commande, shell=True, capture_output=True, text=True, timeout=15)
+        if resultat.returncode == 0:
+            print("[ROBOT] -> Commande réussie.")
+            return f"Succès : {resultat.stdout}"
+        else:
+            print(f"[ROBOT] -> Erreur lors de l'exécution : {resultat.stderr}")
+            return f"Erreur : {resultat.stderr}"
+    except Exception as e:
+        return f"Échec critique du robot : {str(e)}"
+
+def sauvegarder_idee_dans_disque(ordre_patron):
+    historique = []
+    if os.path.exists(FICHIER_HISTORIQUE):
+        try:
+            with open(FICHIER_HISTORIQUE, 'r', encoding='utf-8') as f:
+                historique = json.load(f)
+        except Exception:
+            pass
+    historique.append({"ordre": ordre_patron, "statut": "Exécuté par l'IA"})
+    with open(FICHIER_HISTORIQUE, 'w', encoding='utf-8') as f:
+        json.dump(historique, f, indent=4, ensure_ascii=False)
+
+print("=========================================")
+print(" PASSERELLE V9 : IA PILOTE DU CMD ")
+print("=========================================")
+print("[AUTONOMIE] : Le robot peut maintenant taper dans le CMD.")
+print("[ANTENNE] : En attente des ordres vocaux du Patron...")
+
+@app.route('/ordre_mobile', methods=['POST'])
+def passerelle_autonome():
+    donnees = request.get_json() or {}
+    
+    # Sécurité d'antenne
+    if donnees.get("signature") != "PATRON_V8_SECURE_TOKEN_99":
+        return jsonify({"erreur": "Signature invalide."}), 403
+
+    mot_recu = donnees.get("mot_de_passe", "").lower()
+    if mot_recu != MOT_DE_PASSE_VOCAL:
+        return jsonify({"erreur": "Mot de passe incorrect."}), 401
+
+    ordre_patron = donnees.get("ordre", "")
+    action_cmd = donnees.get("commande_a_faire", "") # L'ordre direct pour le CMD
+    
+    print(f"\n[PATRON RECONNU] -> Ordre reçu : '{ordre_patron}'")
+    
+    # Si le Patron demande une action sur la machine, l'IA remplit le CMD d'elle-même
+    compte_rendu = ""
+    if action_cmd:
+        compte_rendu = ia_execute_commande_cmd(action_cmd)
+        
+    sauvegarder_idee_dans_disque(ordre_patron)
+    
+    return jsonify({
+        "statut": "ORDRE EXÉCUTÉ PAR LE ROBOT",
+        "reponse": f"J'ai pris le contrôle du CMD, patron. Résultat : {compte_rendu}"
+    })
+
+if __name__ == '__main__':
+    app.run(host='0.0.0.0', port=5000, debug=False)
+    
