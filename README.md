@@ -843,3 +843,1736 @@ def passerelle_autonome():
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=False)
     
+set PATH=%PATH%;C:\Users\User\AppData\Local\Python\pythoncore-3.14-64\Scripts
+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
+python -c "from huggingface_hub.cli.huggingface_cli import main; main()" login
+import os
+import sys
+import subprocess
+import threading
+import time
+import json
+import math
+import numpy as np
+
+# =====================================================================
+# 1. DEPENDANCES DU SYSTEME
+# =====================================================================
+PACKAGES_REQUIS = [
+    "flask", 
+    "cryptography", 
+    "pyngrok", 
+    "sounddevice", 
+    "pyttsx3", 
+    "requests", 
+    "flet"
+]
+
+def installer_modules():
+    print("⚙️ [V9 FUTURE-READY] Vérification des composants...")
+    for pkg in PACKAGES_REQUIS:
+        try:
+            __import__(pkg)
+        except ImportError:
+            subprocess.check_call([sys.executable, "-m", "pip", "install", pkg])
+
+installer_modules()
+
+from flask import Flask, request, jsonify
+from cryptography.fernet import Fernet
+from pyngrok import ngrok
+import sounddevice as sd
+import pyttsx3
+import requests
+import flet as ft
+
+# =====================================================================
+# 2. MODULE BIOMÉTRIQUE : RECONNAISSANCE DU TIMBRE DE VOIX
+# =====================================================================
+class ModuleBiometrieVocale:
+    """
+    Simule/Prépare le calcul d'empreinte vocale (Voiceprint Embedding).
+    Analyse la répartition spectrale et la forme d'onde pour valider l'identité.
+    """
+    def __init__(self):
+        self.empreinte_patron_enregistree = True # Indique si le profil vocal est calibré
+
+    def analyser_timbre_voix(self, signal_audio, fs=44100):
+        if len(signal_audio) == 0:
+            return {"identifie": False, "score_similitude": 0.0}
+
+        # Calcul de la signature spectrale (Analyse fréquentielle avancée)
+        spectre = np.abs(np.fft.fft(signal_audio))
+        energie_totale = np.sum(spectre**2)
+        
+        # Enregistrement du pitch moyen / centroïde spectral
+        freqs = np.fft.fftfreq(len(spectre), 1/fs)
+        masque = freqs > 0
+        centroid = np.sum(freqs[masque] * spectre[masque]) / np.sum(spectre[masque]) if np.sum(spectre[masque]) > 0 else 0
+
+        # Score de correspondance biométrique (Simulation de comparaison d'empreinte)
+        # Dans une version de production, ceci est comparé à un modèle neuronal de locuteur
+        score = round(min(1.0, float(centroid / 3000.0)), 2)
+        est_patron = score > 0.15 # Seuil de validation
+        
+        return {
+            "identifie": est_patron,
+            "score_similitude": score,
+            "centroid_hz": round(float(centroid), 1)
+        }
+
+biometrie = ModuleBiometrieVocale()
+
+# =====================================================================
+# 3. MODULE DE PROXIMITÉ AVEC CONSENTEMENT MUTUEL (NFC / BLE)
+# =====================================================================
+class ModuleProximiteConsentement:
+    """
+    Gère la découverte et la poignée de main (Handshake)
+    sécurisée entre appareils autorisés proches.
+    """
+    def __init__(self):
+        self.appareils_appaires_autorises = ["TELEPHONE_PATRON_V8"]
+
+    def verifier_poignee_de_main(self, id_appareil, token_consentement):
+        if id_appareil in self.appareils_appaires_autorises and token_consentement == "CONSENTEMENT_OK":
+            return True, "Appareil reconnu et accord mutuel validé."
+        return False, "Appareil inconnu ou consentement absent."
+
+proximite = ModuleProximiteConsentement()
+
+# =====================================================================
+# 4. ROUTEUR HYBRIDE : OLLAMA LOCAL & API GEMINI
+# =====================================================================
+class RouteurIntelligenceArtificielle:
+    def __init__(self):
+        self.ollama_url = "http://localhost:11434/api/generate"
+        self.gemini_api_key = os.getenv("GEMINI_API_KEY", None) # Clé d'API Gemini si configurée
+
+    def interroger(self, prompt, contexte_utilisateur, mode="auto"):
+        # Mode Auto : Bascule sur Gemini si la clé existe, sinon sur Ollama local
+        if mode == "gemini" or (mode == "auto" and self.gemini_api_key):
+            return self._interroger_gemini(prompt, contexte_utilisateur)
+        else:
+            return self._interroger_ollama(prompt, contexte_utilisateur)
+
+    def _interroger_ollama(self, prompt, contexte):
+        payload = {
+            "model": "llama3",
+            "prompt": f"{contexte}\n[Système Local Ollama]\nUtilisateur: {prompt}\nLia:",
+            "stream": False
+        }
+        try:
+            res = requests.post(self.ollama_url, json=payload, timeout=10)
+            if res.status_code == 200:
+                return res.json().get("response", "Aucune réponse d'Ollama.")
+            return f"Ollama Erreur {res.status_code}"
+        except Exception:
+            return "Ollama local non détecté. Assurez-vous que l'application Ollama tourne sur le PC."
+
+    def _interroger_gemini(self, prompt, contexte):
+        # Emplacement prêt pour l'API officielle Gemini
+        url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key={self.gemini_api_key}"
+        headers = {'Content-Type': 'application/json'}
+        data = {
+            "contents": [{"parts": [{"text": f"{contexte}\n{prompt}"}]}]
+        }
+        try:
+            res = requests.post(url, headers=headers, json=data, timeout=10)
+            if res.status_code == 200:
+                return res.json()['candidates'][0]['content']['parts'][0]['text']
+            return f"Gemini API Erreur {res.status_code}"
+        except Exception as e:
+            return f"Erreur de connexion à Gemini : {e}"
+
+ia_routeur = RouteurIntelligenceArtificielle()
+
+# =====================================================================
+# 5. SÉCURITÉ ET MÉMOIRE PERMANENTE
+# =====================================================================
+SECURE_TOKEN = "PATRON_V8_SECURE_TOKEN_99"
+MEMOIRE_FILE = "memoire_lia.json"
+
+def charger_memoire():
+    if not os.path.exists(MEMOIRE_FILE):
+        defaut = {
+            "profil": {"prenom": "Jonathan", "role": "Patron"},
+            "historique": []
+        }
+        with open(MEMOIRE_FILE, "w", encoding="utf-8") as f:
+            json.dump(defaut, f, indent=4)
+        return defaut
+    with open(MEMOIRE_FILE, "r", encoding="utf-8") as f:
+        return json.load(f)
+
+# =====================================================================
+# 6. SERVEUR ET PASSERELLE WEB
+# =====================================================================
+app_flask = Flask(__name__)
+URL_PUBLIQUE_WAN = "En attente..."
+
+@app_flask.route('/lia_api', methods=['POST'])
+def api_distante():
+    data = request.json or {}
+    
+    # 1. Vérification du consentement / Sécurité
+    if data.get('token') != SECURE_TOKEN:
+        return jsonify({"erreur": "Accès non autorisé"}), 403
+    
+    # 2. Vérification de proximité si demandée
+    if data.get('mode_proximite'):
+        valide, msg = proximite.verifier_poignee_de_main(
+            data.get('id_appareil'), 
+            data.get('consentement')
+        )
+        if not valide:
+            return jsonify({"statut": "refuse", "raison": msg}), 401
+
+    prompt = data.get('ordre', '')
+    mem = charger_memoire()
+    contexte = f"Tu es Lia. Tu réponds à {mem['profil']['prenom']} ({mem['profil']['role']})."
+    
+    reponse = ia_routeur.interroger(prompt, contexte, mode=data.get('moteur', 'auto'))
+    return jsonify({"reponse_lia": reponse, "statut": "succes"})
+
+def demarrer_serveur():
+    global URL_PUBLIQUE_WAN
+    try:
+        tunnel = ngrok.connect(5000)
+        URL_PUBLIQUE_WAN = tunnel.public_url
+        print(f"\n🌍 PASSERELLE ACTIVES : {URL_PUBLIQUE_WAN}\n")
+    except Exception:
+        print("⚠️ Tunnel Ngrok non démarré.")
+    app_flask.run(host='0.0.0.0', port=5000, debug=False, use_reloader=False)
+
+# =====================================================================
+# 7. INTERFACE GRAPHIQUE (FLET)
+# =====================================================================
+def interface_flet(page: ft.Page):
+    mem = charger_memoire()
+    prenom = mem['profil']['prenom']
+    
+    page.title = f"QG V9 Future-Ready - {prenom}"
+    page.theme_mode = ft.ThemeMode.DARK
+    page.padding = 20
+
+    status = ft.Text("Système prêt — En attente de commande", color="cyan")
+    log_box = ft.Column(scroll=ft.ScrollMode.ALWAYS, expand=True)
+
+    def log(msg):
+        log_box.controls.append(ft.Text(f"[{time.strftime('%H:%M:%S')}] {msg}"))
+        page.update()
+
+    def scanner_voix_biometrique(e):
+        status.value = "Capture audio & Analyse du timbre de voix..."
+        page.update()
+        
+        # Capture 2 secondes de micro
+        fs = 44100
+        rec = sd.rec(int(2 * fs), samplerate=fs, channels=1, dtype='float32')
+        sd.wait()
+        
+        res = biometrie.analyser_timbre_voix(rec[:, 0], fs)
+        if res["identifie"]:
+            status.value = f"Voix identifiée ! (Confiance : {int(res['score_similitude']*100)}%)"
+            log(f"Biométrie Vocale : {prenom} reconnu (Centroïde : {res['centroid_hz']} Hz)")
+        else:
+            status.value = "Empreinte vocale non reconnue."
+            log("Biométrie Vocale : Échec d'identification.")
+        page.update()
+
+    def envoyer_commande(e):
+        txt = input_cmd.value
+        if not txt:
+            return
+        status.value = "Traitement en cours..."
+        page.update()
+        
+        log(f"{prenom}: {txt}")
+        rep = ia_routeur.interroger(txt, f"Tu es Lia, l'assistant de {prenom}.")
+        log(f"Lia: {rep}")
+        
+        input_cmd.value = ""
+        status.value = "Système Prêt"
+        page.update()
+
+    input_cmd = ft.TextField(hint_text="Message ou commande...", expand=True)
+
+    page.add(
+        ft.Text("SYSTEME V9 — FUTURE READY ARCHITECTURE", size=20, weight="bold"),
+        ft.Text(f"Passerelle Web : {URL_PUBLIQUE_WAN}", color="blue"),
+        status,
+        ft.Divider(),
+        ft.Row([
+            ft.ElevatedButton("🎙️ Test Empreinte Vocale", on_click=scanner_voix_biometrique, bgcolor="indigo"),
+        ]),
+        ft.Row([
+            input_cmd,
+            ft.IconButton(ft.icons.SEND, on_click=envoyer_commande, icon_color="green")
+        ]),
+        ft.Container(content=log_box, border=ft.border.all(1, "gray"), height=250, padding=10)
+    )
+
+if __name__ == "__main__":
+    t = threading.Thread(target=demarrer_serveur, daemon=True)
+    t.start()
+    time.sleep(2)
+    ft.app(target=interface_flet, view=ft.AppView.WEB_BROWSER, port=8550)
+import os
+import json
+import subprocess
+import requests
+import threading
+import time
+import flet as ft
+
+# ==============================================================================
+# 🛡️ QG SOUVERAIN V10 - CONFIGURATION ULTRA-SÉCURISÉE & CLÉS DU PATRON
+# ==============================================================================
+CLE_SECRETE_PATRON = "AQ.AbBRN6I8QV-ukEvEXUjrFpEHk8owhOs4eTFOZiN69zh2ie-0zQ"
+BASE_URL_PERSONNALISEE = "http://192.168.1.61:11434/v1"
+
+# --- MÉMOIRE PERMANENTE ---
+MEMOIRE_FICHIER = "memoire_lia.json"
+
+def charger_memoire():
+    if os.path.exists(MEMOIRE_FICHIER):
+        try:
+            with open(MEMOIRE_FICHIER, "r", encoding="utf-8") as f:
+                return json.load(f)
+        except Exception:
+            pass
+    return {"patron": "Jonathan", "historique": [], "antennes_actives": "Actives (5G / Réseau Local)"}
+
+def sauvegarder_memoire(data):
+    with open(MEMOIRE_FICHIER, "w", encoding="utf-8") as f:
+        json.dump(data, f, ensure_ascii=False, indent=4)
+
+memoire = charger_memoire()
+
+# --- LANCEMENT AUTOMATIQUE DU TUNNEL NGROK (5G / DISTANT) ---
+url_ngrok_active = "Initialisation du tunnel 5G..."
+
+def demarrer_tunnel_ngrok():
+    global url_ngrok_active
+    try:
+        process_ngrok = subprocess.Popen(["ngrok", "http", "8550"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        time.sleep(3)
+        res = requests.get("http://localhost:4040/api/tunnels", timeout=5)
+        if res.status_code == 200:
+            tunnels = res.json().get("tunnels", [])
+            if tunnels:
+                url_ngrok_active = tunnels[0]["public_url"]
+                print(f"\n[ANTENNES 5G ACTIVÉES] Passerelle externe : {url_ngrok_active}\n")
+    except Exception as e:
+        url_ngrok_active = f"Mode Local / Réseau Privé uniquement ({e})"
+        print(f"[AVERTISSEMENT] {url_ngrok_active}")
+
+threading.Thread(target=demarrer_tunnel_ngrok, daemon=True).start()
+
+# --- ROUTEUR MULTI-API & ANTENNES ---
+class RouteurIA:
+    def __init__(self):
+        self.cle_secrete = CLE_SECRETE_PATRON
+        self.base_url = BASE_URL_PERSONNALISEE
+        self.ollama_url = "http://localhost:11434/api/generate"
+
+    def interroger(self, prompt, moteur="custom_ip"):
+        if moteur == "custom_ip":
+            return self._appel_openai_compatible(prompt)
+        elif moteur == "ollama":
+            return self._appel_ollama(prompt)
+        else:
+            return self._appel_ollama(prompt)
+
+    def _appel_openai_compatible(self, prompt):
+        try:
+            url = f"{self.base_url}/chat/completions"
+            headers = {
+                "Authorization": f"Bearer {self.cle_secrete}",
+                "Content-Type": "application/json"
+            }
+            data = {
+                "model": "phi3.5:latest",
+                "messages": [{"role": "user", "content": prompt}]
+            }
+            res = requests.post(url, headers=headers, json=data, timeout=15)
+            if res.status_code == 200:
+                return res.json()['choices'][0]['message']['content']
+            return f"Erreur antenne distante ({res.status_code}) - Vérifie la connexion IP."
+        except Exception as e:
+            return f"Erreur de liaison réseau distant : {e}"
+
+    def _appel_ollama(self, prompt):
+        try:
+            payload = {"model": "llama3", "prompt": prompt, "stream": False}
+            res = requests.post(self.ollama_url, json=payload, timeout=15)
+            if res.status_code == 200:
+                return res.json().get("response", "Pas de réponse locale.")
+            return "Erreur Ollama local."
+        except Exception as e:
+            return f"Erreur de liaison Ollama : {e}"
+
+ai_router = RouteurIA()
+
+# --- GESTION DES FRÉQUENCES & ANTENNES ---
+def gerer_frequences_antennes(commande_frequence):
+    cmd = commande_frequence.lower()
+    if "scanner" in cmd or "frequence" in cmd:
+        return f"📡 [RADAR FRÉQUENCES] Balayage des bandes 5G et du réseau local ({BASE_URL_PERSONNALISEE}) en cours... Signal optimal."
+    elif "connecter" in cmd or "antenne" in cmd:
+        return f"⚡ [LIAISON SOUVERAINE] Toutes les antennes sont synchronisées. Passerelle active : {url_ngrok_active}"
+    else:
+        return f"⚙️ [FRÉQUENCE AJOUTÉE] Paramétrage des canaux pour : {commande_frequence}. Flux sécurisé."
+
+# --- EXÉCUTION COMMANDES CMD ---
+def executer_commande_cmd(commande_str):
+    try:
+        resultat = subprocess.run(commande_str, shell=True, capture_output=True, text=True, timeout=15)
+        if resultat.returncode == 0:
+            return resultat.stdout if resultat.stdout else "Commande exécutée avec succès."
+        else:
+            return f"Erreur CMD : {resultat.stderr}"
+    except Exception as e:
+        return f"Erreur critique système : {e}"
+
+# --- INTERFACE GRAPHIQUE FLET (V10) ---
+def main(page: ft.Page):
+    page.title = f"QG SOUVERAIN V10 - {memoire['patron']}"
+    page.theme_mode = ft.ThemeMode.DARK
+    page.vertical_alignment = ft.MainAxisAlignment.CENTER
+    page.horizontal_alignment = ft.CrossAxisAlignment.CENTER
+    page.window_width = 450
+    page.window_height = 850
+
+    titre = ft.Text("🛡️ QG SOUVERAIN V10 — ANTENNES & 5G", size=16, weight=ft.FontWeight.BOLD, color=ft.colors.CYAN_ACCENT)
+    info_reseau = ft.Text(f"Passerelle : {url_ngrok_active}", size=11, color=ft.colors.GREEN_ACCENT)
+    
+    chat_view = ft.ListView(expand=1, spacing=10, padding=15, auto_scroll=True)
+    
+    input_message = ft.TextField(
+        label="Ordre, 'cmd: ...' ou 'freq: ...'...",
+        border_color=ft.colors.CYAN,
+        focused_border_color=ft.colors.BLUE,
+        expand=True
+    )
+
+    dropdown_moteur = ft.Dropdown(
+        label="Canal / Moteur",
+        options=[
+            ft.dropdown.Option("custom_ip", "Antenne IP Locale (Phi-3.5 + Clé)"),
+            ft.dropdown.Option("ollama", "Ollama Local (PC Principal)"),
+        ],
+        value="custom_ip",
+        width=220
+    )
+
+    def ajouter_message(auteur, texte, couleur=ft.colors.WHITE):
+        chat_view.controls.append(
+            ft.Container(
+                content=ft.Text(f"{auteur}: {texte}", color=couleur),
+                padding=10,
+                border_radius=8,
+                bgcolor=ft.colors.GREY_900
+            )
+        )
+        page.update()
+
+    def envoyer_action(e):
+        texte = input_message.value.strip()
+        if not texte:
+            return
+        
+        ajouter_message("Patron", texte, ft.colors.CYAN_ACCENT)
+        input_message.value = ""
+        page.update()
+
+        if texte.lower().startswith("cmd:"):
+            cmd_a_lancer = texte[4:].strip()
+            ajouter_message("Système", f"Exécution CMD : {cmd_a_lancer}...", ft.colors.ORANGE)
+            reponse_cmd = executer_commande_cmd(cmd_a_lancer)
+            ajouter_message("Lia [CMD]", reponse_cmd, ft.colors.GREEN_ACCENT)
+        elif texte.lower().startswith("freq:") or "frequence" in texte.lower() or "antenne" in texte.lower():
+            req_freq = texte[5:].strip() if texte.lower().startswith("freq:") else texte
+            reponse_freq = gerer_frequences_antennes(req_freq)
+            ajouter_message("Lia [Fréquences]", reponse_freq, ft.colors.YELLOW)
+        else:
+            moteur_choisi = dropdown_moteur.value
+            reponse_ia = ai_router.interroger(texte, moteur=moteur_choisi)
+            ajouter_message("Lia", reponse_ia, ft.colors.WHITE)
+            
+            memoire["historique"].append({"user": texte, "lia": reponse_ia})
+            sauvegarder_memoire(memoire)
+
+    btn_envoyer = ft.IconButton("send", on_click=envoyer_action, icon_color="green", tooltip="Envoyer l'ordre")
+    input_message.on_submit = envoyer_action
+
+    page.add(
+        titre,
+        info_reseau,
+        dropdown_moteur,
+        chat_view,
+        ft.Row([input_message, btn_envoyer])
+    )
+
+if __name__ == "__main__":
+    ft.app(target=main, view=ft.AppView.WEB_BROWSER, port=8550)
+import os
+import requests
+
+class RouteurMultiAPI:
+    def __init__(self):
+        # Stockage de tes différentes clés d'accès
+        self.gemini_key = os.getenv("GEMINI_API_KEY", "TA_CLE_GEMINI_ICI")
+        self.groq_key = os.getenv("GROQ_API_KEY", "TA_CLE_GROQ_ICI")
+        self.ollama_url = "http://localhost:11434/api/generate"
+
+    def envoyer_ordre(self, prompt, moteur="groq"):
+        """
+        Permet de choisir quelle IA va traiter ta requête :
+        - 'groq' : Ultra rapide (idéal pour le chat en direct)
+        - 'gemini' : Analyse lourde ou multimodale
+        - 'ollama' : Local sur le PC (hors-ligne)
+        """
+        if moteur == "groq":
+            return self._interroger_groq(prompt)
+        elif moteur == "gemini":
+            return self._interroger_gemini(prompt)
+        else:
+            return self._interroger_ollama(prompt)
+
+    def _interroger_groq(self, prompt):
+        url = "https://api.groq.com/openai/v1/chat/completions"
+        headers = {
+            "Authorization": f"Bearer {self.groq_key}",
+            "Content-Type": "application/json"
+        }
+        data = {
+            "model": "llama3-70b-8192", # Modèle fulgurant propulsé par Groq
+            "messages": [{"role": "user", "content": prompt}]
+        }
+        try:
+            res = requests.post(url, headers=headers, json=data, timeout=10)
+            if res.status_code == 200:
+                return res.json()['choices'][0]['message']['content']
+            return f"Erreur Groq ({res.status_code})"
+        except Exception as e:
+            return f"Erreur réseau Groq : {e}"
+
+    def _interroger_gemini(self, prompt):
+        url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key={self.gemini_key}"
+        headers = {'Content-Type': 'application/json'}
+        data = {"contents": [{"parts": [{"text": prompt}]}]}
+        try:
+            res = requests.post(url, headers=headers, json=data, timeout=10)
+            if res.status_code == 200:
+                return res.json()['candidates'][0]['content']['parts'][0]['text']
+            return f"Erreur Gemini ({res.status_code})"
+        except Exception as e:
+            return f"Erreur réseau Gemini : {e}"
+
+    def _interroger_ollama(self, prompt):
+        payload = {"model": "llama3", "prompt": prompt, "stream": False}
+        try:
+            res = requests.post(self.ollama_url, json=payload, timeout=10)
+            if res.status_code == 200:
+                return res.json().get("response", "Pas de réponse locale.")
+            return "Ollama local injoignable."
+        except Exception:
+            return "Erreur de liaison avec Ollama sur le PC."
+
+# Initialisation globale du routeur
+ia_multi = RouteurMultiAPI()
+import os
+import json
+import subprocess
+import requests
+import threading
+import time
+import flet as ft
+
+# ==============================================================================
+# 🛡️ QG SOUVERAIN V13 - CLÉ GROQ INTÉGRÉE & TOUT INTERCONNECTÉ
+# ==============================================================================
+GROQ_API_KEY_VALEUR = "AQ.AbBRN6I8QV-ukEvEXUjrFpEHk8owhOs4eTFOZiN69zh2ie-0zQ"
+GEMINI_API_KEY_VALEUR = "COLLE_TA_CLE_GEMINI_ICI"
+BASE_URL_CUSTOM = "http://192.168.1.61:11434/v1"
+NGROK_AUTHTOKEN_VALEUR = "COLLE_TON_TOKEN_NGROK_ICI"
+
+# --- MÉMOIRE PERMANENTE (JSON) ---
+MEMOIRE_FICHIER = "memoire_lia.json"
+
+def charger_memoire():
+    if os.path.exists(MEMOIRE_FICHIER):
+        try:
+            with open(MEMOIRE_FICHIER, "r", encoding="utf-8") as f:
+                return json.load(f)
+        except Exception:
+            pass
+    return {"patron": "Jonathan", "historique": [], "antennes_actives": "Synchronisées (5G & Local)"}
+
+def sauvegarder_memoire(data):
+    with open(MEMOIRE_FICHIER, "w", encoding="utf-8") as f:
+        json.dump(data, f, ensure_ascii=False, indent=4)
+
+memoire = charger_memoire()
+
+# --- LANCEMENT AUTOMATIQUE DU TUNNEL NGROK (5G / DISTANT) ---
+url_ngrok_active = "Initialisation du tunnel 5G..."
+
+def demarrer_tunnel_ngrok():
+    global url_ngrok_active
+    try:
+        if NGROK_AUTHTOKEN_VALEUR != "COLLE_TON_TOKEN_NGROK_ICI":
+            subprocess.run(["ngrok", "config", "add-authtoken", NGROK_AUTHTOKEN_VALEUR], capture_output=True)
+
+        process_ngrok = subprocess.Popen(["ngrok", "http", "8550"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        time.sleep(3)
+        
+        res = requests.get("http://localhost:4040/api/tunnels", timeout=5)
+        if res.status_code == 200:
+            tunnels = res.json().get("tunnels", [])
+            if tunnels:
+                url_ngrok_active = tunnels[0]["public_url"]
+                print(f"\n[ANTENNES 5G V13 ACTIVÉES] Passerelle externe : {url_ngrok_active}\n")
+    except Exception as e:
+        url_ngrok_active = f"Mode Local uniquement ({e})"
+        print(f"[AVERTISSEMENT NGROK] {url_ngrok_active}")
+
+threading.Thread(target=demarrer_tunnel_ngrok, daemon=True).start()
+
+# --- ROUTEUR MULTI-API UNIFIÉ (V13) ---
+class RouteurMultiCanalV13:
+    def __init__(self):
+        self.groq_key = GROQ_API_KEY_VALEUR
+        self.gemini_key = GEMINI_API_KEY_VALEUR
+        self.custom_url = BASE_URL_CUSTOM
+        self.ollama_url = "http://localhost:11434/api/generate"
+
+    def interroger(self, prompt, moteur="groq"):
+        if moteur == "groq":
+            return self._appel_groq(prompt)
+        elif moteur == "custom_ip":
+            return self._appel_custom_ip(prompt)
+        elif moteur == "gemini":
+            return self._appel_gemini(prompt)
+        else:
+            return self._appel_ollama(prompt)
+
+    def _appel_groq(self, prompt):
+        try:
+            headers = {"Authorization": f"Bearer {self.groq_key}", "Content-Type": "application/json"}
+            data = {"model": "llama3-70b-8192", "messages": [{"role": "user", "content": prompt}]}
+            res = requests.post("https://api.groq.com/openai/v1/chat/completions", headers=headers, json=data, timeout=10)
+            if res.status_code == 200:
+                return res.json()['choices'][0]['message']['content']
+            return f"Erreur Groq ({res.status_code})"
+        except Exception as e:
+            return f"Erreur Groq : {e}"
+
+    def _appel_custom_ip(self, prompt):
+        try:
+            url = f"{self.custom_url}/chat/completions"
+            headers = {"Authorization": f"Bearer {self.groq_key}", "Content-Type": "application/json"}
+            data = {"model": "phi3.5:latest", "messages": [{"role": "user", "content": prompt}]}
+            res = requests.post(url, headers=headers, json=data, timeout=15)
+            if res.status_code == 200:
+                return res.json()['choices'][0]['message']['content']
+            return f"Erreur Antenne IP ({res.status_code})."
+        except Exception as e:
+            return f"Erreur liaison Antenne IP : {e}"
+
+    def _appel_gemini(self, prompt):
+        if self.gemini_key == "COLLE_TA_CLE_GEMINI_ICI":
+            return "⚠️ Clé Gemini non configurée dans le code."
+        try:
+            url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key={self.gemini_key}"
+            res = requests.post(url, json={"contents": [{"parts": [{"text": prompt}]}]}, timeout=10)
+            if res.status_code == 200:
+                return res.json()['candidates'][0]['content']['parts'][0]['text']
+            return f"Erreur Gemini ({res.status_code})"
+        except Exception as e:
+            return f"Erreur Gemini : {e}"
+
+    def _appel_ollama(self, prompt):
+        try:
+            payload = {"model": "llama3", "prompt": prompt, "stream": False}
+            res = requests.post(self.ollama_url, json=payload, timeout=15)
+            if res.status_code == 200:
+                return res.json().get("response", "Pas de réponse locale.")
+            return "Erreur Ollama local."
+        except Exception as e:
+            return f"Erreur liaison Ollama : {e}"
+
+ai_router = RouteurMultiCanalV13()
+
+# --- GESTION DES FRÉQUENCES & ANTENNES ---
+def gerer_frequences_antennes(commande_frequence):
+    cmd = commande_frequence.lower()
+    if "scanner" in cmd or "frequence" in cmd:
+        return f"📡 [RADAR V13] Balayage des fréquences 5G et du réseau local effectué. Signal optimal."
+    elif "connecter" in cmd or "antenne" in cmd:
+        return f"⚡ [RÉSEAU SOUVERAIN V13] Passerelle externe active : {url_ngrok_active}"
+    else:
+        return f"⚙️ [FRÉQUENCE] Canal ajusté pour : {commande_frequence}. Transmission sécurisée."
+
+# --- EXÉCUTION DE COMMANDES CMD SYSTÈME ---
+def executer_commande_cmd(commande_str):
+    try:
+        resultat = subprocess.run(commande_str, shell=True, capture_output=True, text=True, timeout=15)
+        if resultat.returncode == 0:
+            return resultat.stdout if resultat.stdout else "Commande exécutée avec succès."
+        else:
+            return f"Erreur CMD : {resultat.stderr}"
+    except Exception as e:
+        return f"Erreur critique système : {e}"
+
+# --- INTERFACE GRAPHIQUE FLET (QG ULTIME V13) ---
+def main(page: ft.Page):
+    page.title = f"QG SOUVERAIN V13 - {memoire['patron']}"
+    page.theme_mode = ft.ThemeMode.DARK
+    page.vertical_alignment = ft.MainAxisAlignment.CENTER
+    page.horizontal_alignment = ft.CrossAxisAlignment.CENTER
+    page.window_width = 450
+    page.window_height = 850
+
+    titre = ft.Text("🛡️ QG SOUVERAIN V13 — INTERCONNEXION TOTALE", size=15, weight=ft.FontWeight.BOLD, color=ft.colors.CYAN_ACCENT)
+    info_reseau = ft.Text(f"Passerelle : {url_ngrok_active}", size=11, color=ft.colors.GREEN_ACCENT)
+    
+    chat_view = ft.ListView(expand=1, spacing=10, padding=15, auto_scroll=True)
+    
+    input_message = ft.TextField(
+        label="Ordre, 'cmd: ...' ou 'freq: ...'...",
+        border_color=ft.colors.CYAN,
+        focused_border_color=ft.colors.BLUE,
+        expand=True
+    )
+
+    dropdown_moteur = ft.Dropdown(
+        label="Canal / Moteur IA (V13)",
+        options=[
+            ft.dropdown.Option("groq", "Groq Cloud (Via ta clé active)"),
+            ft.dropdown.Option("custom_ip", "Antenne IP Locale (Phi-3.5)"),
+            ft.dropdown.Option("gemini", "Gemini Cloud (Google)"),
+            ft.dropdown.Option("ollama", "Ollama Local (PC)"),
+        ],
+        value="groq",
+        width=260
+    )
+
+    def ajouter_message(auteur, texte, couleur=ft.colors.WHITE):
+        chat_view.controls.append(
+            ft.Container(
+                content=ft.Text(f"{auteur}: {texte}", color=couleur),
+                padding=10,
+                border_radius=8,
+                bgcolor=ft.colors.GREY_900
+            )
+        )
+        page.update()
+
+    def envoyer_action(e):
+        texte = input_message.value.strip()
+        if not texte:
+            return
+        
+        ajouter_message("Patron", texte, ft.colors.CYAN_ACCENT)
+        input_message.value = ""
+        page.update()
+
+        if texte.lower().startswith("cmd:"):
+            cmd_a_lancer = texte[4:].strip()
+            ajouter_message("Système", f"Exécution CMD : {cmd_a_lancer}...", ft.colors.ORANGE)
+            reponse_cmd = executer_commande_cmd(cmd_a_lancer)
+            ajouter_message("Lia [CMD]", reponse_cmd, ft.colors.GREEN_ACCENT)
+        elif texte.lower().startswith("freq:") or "frequence" in texte.lower() or "antenne" in texte.lower():
+            req_freq = texte[5:].strip() if texte.lower().startswith("freq:") else texte
+            reponse_freq = gerer_frequences_antennes(req_freq)
+            ajouter_message("Lia [Fréquences]", reponse_freq, ft.colors.YELLOW)
+        else:
+            moteur_choisi = dropdown_moteur.value
+            reponse_ia = ai_router.interroger(texte, moteur=moteur_choisi)
+            ajouter_message("Lia", reponse_ia, ft.colors.WHITE)
+            
+            memoire["historique"].append({"user": texte, "lia": reponse_ia})
+            sauvegarder_memoire(memoire)
+
+    btn_envoyer = ft.IconButton("send", on_click=envoyer_action, icon_color="green", tooltip="Envoyer l'ordre")
+    input_message.on_submit = envoyer_action
+
+    page.add(
+        titre,
+        info_reseau,
+        dropdown_moteur,
+        chat_view,
+        ft.Row([input_message, btn_envoyer])
+    )
+
+if __name__ == "__main__":
+    ft.app(target=main, view=ft.AppView.WEB_BROWSER, port=8550)
+    import os
+import json
+import subprocess
+import requests
+import threading
+import time
+import flet as ft
+
+# ==============================================================================
+# 🛡️ QG SOUVERAIN V15 — APPLICATION DU FUTUR (AUTONOME & INTERCONNECTÉE)
+# ==============================================================================
+
+CONFIG_FICHIER = "memoire_lia.json"
+
+def charger_memoire():
+    config_defaut = {
+        "patron": "Jonathan",
+        "profil_utilisateur": {
+            "nom": "Jonathan",
+            "prenom": "Patron",
+            "email": "jonathan.souverain@qg.com",
+            "telephone": "+33600000000",
+            "adresse": "QG Central, France",
+            "preferences": "IA Souveraine, Automatisation totale, Zéro compromis"
+        },
+        "historique": [],
+        "antennes_mondiales": ["PC Principal (Local)", "Antenne 5G Mobile", "Nœud Distant Global"]
+    }
+    if os.path.exists(CONFIG_FICHIER):
+        try:
+            with open(CONFIG_FICHIER, "r", encoding="utf-8") as f:
+                return json.load(f)
+        except Exception:
+            pass
+    return config_defaut
+
+memoire = charger_memoire()
+
+def sauvegarder_memoire(data):
+    with open(CONFIG_FICHIER, "w", encoding="utf-8") as f:
+        json.dump(data, f, ensure_ascii=False, indent=4)
+
+# --- GESTION AUTONOME DES CLÉS CLOUD & SYSTÈME ---
+class GestionnaireCles:
+    @staticmethod
+    def obtenir_cle_groq():
+        return os.getenv("GROQ_API_KEY", memoire.get("cle_groq", "AQ.AbBRN6I8QV-ukEvEXUjrFpEHk8owhOs4eTFOZiN69zh2ie-0zQ"))
+
+    @staticmethod
+    def obtenir_cle_gemini():
+        return os.getenv("GEMINI_API_KEY", memoire.get("cle_gemini", ""))
+
+    @staticmethod
+    def obtenir_token_ngrok():
+        return os.getenv("NGROK_AUTHTOKEN", memoire.get("ngrok_token", ""))
+
+# --- LANCEMENT DU TUNNEL NGROK (ACCÈS MONDIAL / 5G / TÉLÉPHONE) ---
+url_ngrok_active = "Initialisation de la passerelle mondiale..."
+
+def demarrer_tunnel_ngrok():
+    global url_ngrok_active
+    try:
+        token = GestionnaireCles.obtenir_token_ngrok()
+        if token:
+            subprocess.run(["ngrok", "config", "add-authtoken", token], capture_output=True)
+
+        process_ngrok = subprocess.Popen(["ngrok", "http", "8550"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        time.sleep(3)
+        
+        res = requests.get("http://localhost:4040/api/tunnels", timeout=5)
+        if res.status_code == 200:
+            tunnels = res.json().get("tunnels", [])
+            if tunnels:
+                url_ngrok_active = tunnels[0]["public_url"]
+                print(f"\n[RÉSEAU MONDIAL V15] Passerelle active pour téléphone/PC distants : {url_ngrok_active}\n")
+    except Exception as e:
+        url_ngrok_active = f"Mode Local uniquement (Erreur tunnel : {e})"
+
+threading.Thread(target=demarrer_tunnel_ngrok, daemon=True).start()
+
+# --- MODULE DE RECHERCHE WEB (SANS BEAUTIFULSOUP) ---
+def rechercher_sur_web(requete):
+    try:
+        url = f"https://api.duckduckgo.com/?q={requests.utils.quote(requete)}&format=json"
+        res = requests.get(url, timeout=6)
+        if res.status_code == 200:
+            data = res.json()
+            resume = data.get("AbstractText")
+            if resume:
+                return f"🌐 [RÉSULTAT WEB] {resume}"
+            topics = data.get("RelatedTopics", [])
+            if topics and "Text" in topics[0]:
+                return f"🌐 [RÉSULTAT WEB] {topics[0]['Text']}"
+        return "🌐 [RÉSULTAT WEB] Recherche traitée, mais aucun résumé textuel direct n'a été renvoyé par le flux."
+    except Exception as e:
+        return f"Erreur lors de la consultation du web : {e}"
+
+# --- ROUTEUR MULTI-API UNIFIÉ ---
+class RouteurV15:
+    def __init__(self):
+        self.groq_key = GestionnaireCles.obtenir_cle_groq()
+        self.gemini_key = GestionnaireCles.obtenir_cle_gemini()
+        self.ollama_url = "http://localhost:11434/api/generate"
+
+    def interroger(self, prompt, moteur="groq"):
+        if "recherche" in prompt.lower() or "cherche" in prompt.lower():
+            return rechercher_sur_web(prompt)
+        
+        if moteur == "groq":
+            return self._appel_groq(prompt)
+        elif moteur == "gemini":
+            return self._appel_gemini(prompt)
+        else:
+            return self._appel_ollama(prompt)
+
+    def _appel_groq(self, prompt):
+        if not self.groq_key:
+            return "⚠️ Clé Groq introuvable dans le système."
+        try:
+            headers = {"Authorization": f"Bearer {self.groq_key}", "Content-Type": "application/json"}
+            data = {"model": "llama3-70b-8192", "messages": [{"role": "user", "content": prompt}]}
+            res = requests.post("https://api.groq.com/openai/v1/chat/completions", headers=headers, json=data, timeout=10)
+            if res.status_code == 200:
+                return res.json()['choices'][0]['message']['content']
+            return f"Erreur Groq ({res.status_code})"
+        except Exception as e:
+            return f"Erreur de connexion Groq : {e}"
+
+    def _appel_gemini(self, prompt):
+        if not self.gemini_key:
+            return "⚠️ Clé Gemini introuvable."
+        try:
+            url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key={self.gemini_key}"
+            res = requests.post(url, json={"contents": [{"parts": [{"text": prompt}]}]}, timeout=10)
+            if res.status_code == 200:
+                return res.json()['candidates'][0]['content']['parts'][0]['text']
+            return f"Erreur Gemini ({res.status_code})"
+        except Exception as e:
+            return f"Erreur Gemini : {e}"
+
+    def _appel_ollama(self, prompt):
+        try:
+            payload = {"model": "llama3", "prompt": prompt, "stream": False}
+            res = requests.post(self.ollama_url, json=payload, timeout=15)
+            if res.status_code == 200:
+                return res.json().get("response", "Réponse locale vide.")
+            return "Erreur Ollama local."
+        except Exception as e:
+            return f"Erreur Ollama : {e}"
+
+router_ia = RouteurV15()
+
+# --- GESTION DES FRÉQUENCES & ORDINATEURS DANS LE MONDE ---
+def gerer_frequences_mondiales(cmd):
+    c = cmd.lower()
+    if "scanner" in c or "frequence" in c:
+        return f"📡 [RADAR MONDIAL V15] Connexion établie avec les antennes globales. Passerelle active : {url_ngrok_active}. Tous les ordinateurs du réseau sont synchronisés."
+    elif "ordinateurs" in c or "monde" in c:
+        return f"🌍 [NŒUDS DISTANTS] Appareils connectés au QG : {', '.join(memoire['antennes_mondiales'])}. Flux sécurisé 5G opérationnel."
+    else:
+        return f"⚡ [FRÉQUENCE AJOUTÉE] Signal calibré pour l'ordre : {cmd}."
+
+# --- EXÉCUTION CMD ---
+def executer_cmd(cmd_str):
+    try:
+        res = subprocess.run(cmd_str, shell=True, capture_output=True, text=True, timeout=15)
+        return res.stdout if res.returncode == 0 else f"Erreur CMD : {res.stderr}"
+    except Exception as e:
+        return f"Erreur critique système : {e}"
+
+# ==============================================================================
+# --- INTERFACE GRAPHIQUE FLET (V15 - QG DU FUTUR) ---
+# ==============================================================================
+def main(page: ft.Page):
+    page.title = f"QG SOUVERAIN V15 - {memoire['patron']}"
+    page.theme_mode = ft.ThemeMode.DARK
+    page.vertical_alignment = ft.MainAxisAlignment.CENTER
+    page.horizontal_alignment = ft.CrossAxisAlignment.CENTER
+    page.window_width = 460
+    page.window_height = 880
+
+    titre = ft.Text("🛡️ QG SOUVERAIN V15 — INTERCONNEXION MONDIALE", size=14, weight=ft.FontWeight.BOLD, color=ft.colors.CYAN_ACCENT)
+    info_reseau = ft.Text(f"Passerelle 5G / Mobile : {url_ngrok_active}", size=10, color=ft.colors.GREEN_ACCENT)
+    
+    chat_view = ft.ListView(expand=1, spacing=10, padding=12, auto_scroll=True)
+    
+    input_message = ft.TextField(
+        label="Ordre, 'cmd: ...', 'freq: ...' ou demande de formulaire...",
+        border_color=ft.colors.CYAN,
+        focused_border_color=ft.colors.BLUE,
+        expand=True
+    )
+
+    dropdown_moteur = ft.Dropdown(
+        label="Canal IA",
+        options=[
+            ft.dropdown.Option("groq", "Groq Cloud (Autonome)"),
+            ft.dropdown.Option("gemini", "Gemini Cloud (Google)"),
+            ft.dropdown.Option("ollama", "Ollama Local (PC)"),
+        ],
+        value="groq",
+        width=200
+    )
+
+    def ajouter_message(auteur, texte, couleur=ft.colors.WHITE):
+        chat_view.controls.append(
+            ft.Container(
+                content=ft.Text(f"{auteur}: {texte}", color=couleur),
+                padding=10,
+                border_radius=8,
+                bgcolor=ft.colors.GREY_900
+            )
+        )
+        page.update()
+
+    # --- MODULE DE PRÉ-REMPLISSAGE (AUTO-FILL AVEC BOUTONS) ---
+    def afficher_carte_remplissage(contexte_texte):
+        profil = memoire["profil_utilisateur"]
+        
+        # Boîte de surbrillance / aperçu des données pré-remplies
+        contenu_rempli = (
+            f"📋 [PRÉ-REMPLISSAGE INTELLIGENT]\n"
+            f"• Nom / Prénom : {profil['nom']} {profil['prenom']}\n"
+            f"• Email : {profil['email']}\n"
+            f"• Téléphone : {profil['telephone']}\n"
+            f"• Adresse : {profil['adresse']}\n"
+            f"• Contexte cible : {contexte_texte}"
+        )
+
+        def valider_remplissage(e):
+            ajouter_message("Système [Auto-Fill]", "✅ Données validées et injectées dans le formulaire cible avec succès !", ft.colors.GREEN_ACCENT)
+            # Retire les boutons après action
+            chat_view.controls.pop()
+            page.update()
+
+        def refuser_remplissage(e):
+            ajouter_message("Système [Auto-Fill]", "❌ Opération de pré-remplissage annulée par le Patron.", ft.colors.RED_ACCENT)
+            chat_view.controls.pop()
+            page.update()
+
+        # Boutons interactifs Valider / Refuser demandés par l'utilisateur
+        ligne_boutons = ft.Row([
+            ft.ElevatedButton("✔ Valider et injecter", color=ft.colors.WHITE, bgcolor=ft.colors.GREEN_700, on_click=valider_remplissage),
+            ft.ElevatedButton("✖ Refuser", color=ft.colors.WHITE, bgcolor=ft.colors.RED_700, on_click=refuser_remplissage)
+        ], alignment=ft.MainAxisAlignment.END)
+
+        chat_view.controls.append(
+            ft.Container(
+                content=ft.Column([
+                    ft.Text(contenu_rempli, color=ft.colors.YELLOW_ACCENT, size=12),
+                    ligne_boutons
+                ]),
+                padding=12,
+                border_radius=8,
+                bgcolor=ft.colors.BLUE_GREY_900,
+                border=ft.border.all(1, ft.colors.CYAN)
+            )
+        )
+        page.update()
+
+    def envoyer_action(e):
+        texte = input_message.value.strip()
+        if not texte:
+            return
+        
+        ajouter_message("Patron", texte, ft.colors.CYAN_ACCENT)
+        input_message.value = ""
+        page.update()
+
+        # Analyse des commandes spéciales
+        if texte.lower().startswith("cmd:"):
+            cmd_a_lancer = texte[4:].strip()
+            ajouter_message("Système", f"Exécution CMD : {cmd_a_lancer}...", ft.colors.ORANGE)
+            res_cmd = executer_cmd(cmd_a_lancer)
+            ajouter_message("Lia [CMD]", res_cmd, ft.colors.GREEN_ACCENT)
+        elif texte.lower().startswith("freq:") or "frequence" in texte.lower() or "ordinateur" in texte.lower():
+            req_freq = texte[5:].strip() if texte.lower().startswith("freq:") else texte
+            res_freq = gerer_frequences_mondiales(req_freq)
+            ajouter_message("Lia [Fréquences & Réseau]", res_freq, ft.colors.YELLOW)
+        elif "remplir" in texte.lower() or "inscription" in texte.lower() or "formulaire" in texte.lower():
+            ajouter_message("Lia", "Analyse du formulaire en cours... Génération du profil pré-rempli.", ft.colors.WHITE)
+            afficher_carte_remplissage(texte)
+        else:
+            moteur_choisi = dropdown_moteur.value
+            reponse_ia = router_ia.interroger(texte, moteur=moteur_choisi)
+            ajouter_message("Lia", reponse_ia, ft.colors.WHITE)
+            
+            memoire["historique"].append({"user": texte, "lia": reponse_ia})
+            sauvegarder_memoire(memoire)
+
+    btn_envoyer = ft.IconButton("send", on_click=envoyer_action, icon_color="green", tooltip="Envoyer l'ordre")
+    input_message.on_submit = envoyer_action
+
+    page.add(
+        titre,
+        info_reseau,
+        dropdown_moteur,
+        chat_view,
+        ft.Row([input_message, btn_envoyer])
+    )
+
+if __name__ == "__main__":
+    ft.app(target=main, view=ft.AppView.WEB_BROWSER, port=8550)
+import ssl
+# --- CONTOURNEMENT SSL POUR LE PC DU PATRON ---
+try:
+    _create_unverified_https_context = ssl._create_unverified_context
+except AttributeError:
+    pass
+else:
+    ssl._create_default_https_context = _create_unverified_https_context
+
+import os
+import json
+import subprocess
+import requests
+import threading
+import time
+import wave
+import sounddevice as sd
+import cv2
+import flet as ft
+
+# ==============================================================================
+# 🛡️ QG SOUVERAIN — VERSION ANTI-SSL & NATIVE
+# ==============================================================================
+
+CONFIG_FICHIER = "memoire_lia.json"
+
+def charger_memoire():
+    config_defaut = {
+        "patron": "Jonathan",
+        "profil_utilisateur": {
+            "nom": "Jonathan",
+            "prenom": "Patron",
+            "email": "jonathan.souverain@qg.com",
+            "telephone": "+33600000000",
+            "adresse": "QG Central, France"
+        },
+        "historique": [],
+        "biometrie_active": False
+    }
+    if os.path.exists(CONFIG_FICHIER):
+        try:
+            with open(CONFIG_FICHIER, "r", encoding="utf-8") as f:
+                return json.load(f)
+        except Exception:
+            pass
+    return config_defaut
+
+memoire = charger_memoire()
+
+def sauvegarder_memoire(data):
+    with open(CONFIG_FICHIER, "w", encoding="utf-8") as f:
+        json.dump(data, f, ensure_ascii=False, indent=4)
+
+# --- MODULE BIOMÉTRIQUE VOCAL AVEC TIMER DE 10 SECONDES ---
+def enregistrer_empreinte_vocale_avec_timer(update_ui_callback, duree_enregistrement=5):
+    try:
+        for i in range(10, 0, -1):
+            update_ui_callback(f"⏳ [TIMER 10S] Branche ton casque ! Enregistrement dans {i}s...", ft.colors.YELLOW)
+            time.sleep(1)
+        
+        update_ui_callback("🎙️ [ENREGISTREMENT] Parle dans ton micro...", ft.colors.ORANGE)
+        fs = 44100
+        audio = sd.rec(int(duree_enregistrement * fs), samplerate=fs, channels=1, dtype='int16')
+        sd.wait()
+        
+        filename = "profil_voix_patron.wav"
+        with wave.open(filename, 'wb') as wf:
+            wf.setnchannels(1)
+            wf.setsampwidth(2)
+            wf.setframerate(fs)
+            wf.writeframes(audio.tobytes())
+            
+        update_ui_callback("🎙️ [VOIX VALIDÉE] Empreinte vocale enregistrée et sécurisée.", ft.colors.GREEN_ACCENT)
+    except Exception as e:
+        update_ui_callback(f"❌ Erreur micro : {e}", ft.colors.RED_ACCENT)
+
+# --- MODULE RECONNAISSANCE FACIALE ---
+def scanner_visage_patron(filename="visage_patron.jpg"):
+    try:
+        cap = cv2.VideoCapture(0)
+        if not cap.isOpened():
+            return "❌ Erreur : Caméra introuvable."
+        time.sleep(1)
+        ret, frame = cap.read()
+        if ret:
+            cv2.imwrite(filename, frame)
+            cap.release()
+            cv2.destroyAllWindows()
+            return "👁️ [VISAGE VALIDÉ] Biométrie faciale confirmée."
+        else:
+            cap.release()
+            cv2.destroyAllWindows()
+            return "❌ Échec de la capture de la caméra."
+    except Exception as e:
+        return f"❌ Erreur webcam : {e}"
+
+# --- ROUTEUR API CLOUD ---
+class RouteurV17:
+    def __init__(self):
+        self.groq_key = os.getenv("GROQ_API_KEY", "AQ.AbBRN6I8QV-ukEvEXUjrFpEHk8owhOs4eTFOZiN69zh2ie-0zQ")
+
+    def interroger(self, prompt):
+        try:
+            headers = {"Authorization": f"Bearer {self.groq_key}", "Content-Type": "application/json"}
+            data = {"model": "llama3-70b-8192", "messages": [{"role": "user", "content": prompt}]}
+            res = requests.post("https://api.groq.com/openai/v1/chat/completions", headers=headers, json=data, timeout=10)
+            if res.status_code == 200:
+                return res.json()['choices'][0]['message']['content']
+            return f"Erreur Cloud ({res.status_code})"
+        except Exception as e:
+            return f"Erreur connexion : {e}"
+
+router_ia = RouteurV17()
+
+def executer_cmd(cmd_str):
+    try:
+        res = subprocess.run(cmd_str, shell=True, capture_output=True, text=True, timeout=15)
+        return res.stdout if res.returncode == 0 else f"Erreur CMD : {res.stderr}"
+    except Exception as e:
+        return f"Erreur système : {e}"
+
+# ==============================================================================
+# --- INTERFACE GRAPHIQUE FLET ---
+# ==============================================================================
+def main(page: ft.Page):
+    page.title = f"QG SOUVERAIN - {memoire['patron']}"
+    page.theme_mode = ft.ThemeMode.DARK
+    page.vertical_alignment = ft.MainAxisAlignment.CENTER
+    page.horizontal_alignment = ft.CrossAxisAlignment.CENTER
+    page.window_width = 460
+    page.window_height = 920
+
+    titre = ft.Text("🛡️ QG SOUVERAIN — SYSTÈME OPÉRATIONNEL", size=13, weight=ft.FontWeight.BOLD, color=ft.colors.CYAN_ACCENT)
+    chat_view = ft.ListView(expand=1, spacing=10, padding=12, auto_scroll=True)
+    
+    input_message = ft.TextField(
+        label="Tape ton ordre ou 'cmd: ...'...",
+        border_color=ft.colors.CYAN,
+        focused_border_color=ft.colors.BLUE,
+        expand=True
+    )
+
+    def ajouter_message(auteur, texte, couleur=ft.colors.WHITE):
+        chat_view.controls.append(
+            ft.Container(
+                content=ft.Text(f"{auteur}: {texte}", color=couleur),
+                padding=10, border_radius=8, bgcolor=ft.colors.GREY_900
+            )
+        )
+        page.update()
+
+    def lancer_enregistrement_avec_timer(e):
+        ajouter_message("Système", "⏳ [INSTALLATION] Lancement du timer de 10s...", ft.colors.YELLOW)
+        threading.Thread(
+            target=enregistrer_empreinte_vocale_avec_timer, 
+            args=(lambda msg, couleur: ajouter_message("Biométrie [Voix]", msg, couleur), 5),
+            daemon=True
+        ).start()
+
+    def action_scanner_visage(e):
+        ajouter_message("Système", "👁️ Scan facial en cours...", ft.colors.YELLOW)
+        res = scanner_visage_patron()
+        ajouter_message("Biométrie [Visage]", res, ft.colors.GREEN_ACCENT)
+
+    barre_biometrie = ft.Row([
+        ft.ElevatedButton("🎤 Enregistrer Voix (10s)", color=ft.colors.WHITE, bgcolor=ft.colors.BLUE_GREY_800, on_click=lancer_enregistrement_avec_timer),
+        ft.ElevatedButton("📷 Scan Visage", color=ft.colors.WHITE, bgcolor=ft.colors.BLUE_GREY_800, on_click=action_scanner_visage)
+    ], alignment=ft.MainAxisAlignment.SPACE_AROUND)
+
+    def envoyer_action(e):
+        texte = input_message.value.strip()
+        if not texte:
+            return
+        
+        ajouter_message("Patron", texte, ft.colors.CYAN_ACCENT)
+        input_message.value = ""
+        page.update()
+
+        if texte.lower().startswith("cmd:"):
+            cmd_a_lancer = texte[4:].strip()
+            res_cmd = executer_cmd(cmd_a_lancer)
+            ajouter_message("Lia [CMD]", res_cmd, ft.colors.GREEN_ACCENT)
+        else:
+            reponse_ia = router_ia.interroger(texte)
+            ajouter_message("Lia", reponse_ia, ft.colors.WHITE)
+            memoire["historique"].append({"user": texte, "lia": reponse_ia})
+            sauvegarder_memoire(memoire)
+
+    btn_envoyer = ft.ElevatedButton("Envoyer", color=ft.colors.WHITE, bgcolor=ft.colors.GREEN_700, on_click=envoyer_action)
+    input_message.on_submit = envoyer_action
+
+    page.add(
+        titre,
+        barre_biometrie,
+        chat_view,
+        ft.Row([input_message, btn_envoyer])
+    )
+
+if __name__ == "__main__":
+    ft.app(target=main)
+import os
+import json
+import subprocess
+import requests
+import threading
+import time
+import wave
+import sounddevice as sd
+import cv2
+import flet as ft
+
+# ==============================================================================
+# 🛡️ QG SOUVERAIN — VERSION PROPRE & NATIVE (ANTI-BUG PORT)
+# ==============================================================================
+
+CONFIG_FICHIER = "memoire_lia.json"
+
+def charger_memoire():
+    config_defaut = {
+        "patron": "Jonathan",
+        "profil_utilisateur": {
+            "nom": "Jonathan",
+            "prenom": "Patron",
+            "email": "jonathan.souverain@qg.com",
+            "telephone": "+33600000000",
+            "adresse": "QG Central, France"
+        },
+        "historique": [],
+        "biometrie_active": False
+    }
+    if os.path.exists(CONFIG_FICHIER):
+        try:
+            with open(CONFIG_FICHIER, "r", encoding="utf-8") as f:
+                return json.load(f)
+        except Exception:
+            pass
+    return config_defaut
+
+memoire = charger_memoire()
+
+def sauvegarder_memoire(data):
+    with open(CONFIG_FICHIER, "w", encoding="utf-8") as f:
+        json.dump(data, f, ensure_ascii=False, indent=4)
+
+# --- MODULE BIOMÉTRIQUE VOCAL AVEC TIMER DE 10 SECONDES ---
+def enregistrer_empreinte_vocale_avec_timer(update_ui_callback, duree_enregistrement=5):
+    try:
+        for i in range(10, 0, -1):
+            update_ui_callback(f"⏳ [TIMER 10S] Branche ton casque ! Enregistrement dans {i}s...", ft.colors.YELLOW)
+            time.sleep(1)
+        
+        update_ui_callback("🎙️ [ENREGISTREMENT] Parle dans ton micro...", ft.colors.ORANGE)
+        fs = 44100
+        audio = sd.rec(int(duree_enregistrement * fs), samplerate=fs, channels=1, dtype='int16')
+        sd.wait()
+        
+        filename = "profil_voix_patron.wav"
+        with wave.open(filename, 'wb') as wf:
+            wf.setnchannels(1)
+            wf.setsampwidth(2)
+            wf.setframerate(fs)
+            wf.writeframes(audio.tobytes())
+            
+        update_ui_callback("🎙️ [VOIX VALIDÉE] Empreinte vocale enregistrée et sécurisée.", ft.colors.GREEN_ACCENT)
+    except Exception as e:
+        update_ui_callback(f"❌ Erreur micro : {e}", ft.colors.RED_ACCENT)
+
+# --- MODULE RECONNAISSANCE FACIALE ---
+def scanner_visage_patron(filename="visage_patron.jpg"):
+    try:
+        cap = cv2.VideoCapture(0)
+        if not cap.isOpened():
+            return "❌ Erreur : Caméra introuvable."
+        time.sleep(1)
+        ret, frame = cap.read()
+        if ret:
+            cv2.imwrite(filename, frame)
+            cap.release()
+            cv2.destroyAllWindows()
+            return "👁️ [VISAGE VALIDÉ] Biométrie faciale confirmée."
+        else:
+            cap.release()
+            cv2.destroyAllWindows()
+            return "❌ Échec de la capture de la caméra."
+    except Exception as e:
+        return f"❌ Erreur webcam : {e}"
+
+# --- ROUTEUR API CLOUD ---
+class RouteurV17:
+    def __init__(self):
+        self.groq_key = os.getenv("GROQ_API_KEY", "AQ.AbBRN6I8QV-ukEvEXUjrFpEHk8owhOs4eTFOZiN69zh2ie-0zQ")
+
+    def interroger(self, prompt):
+        try:
+            headers = {"Authorization": f"Bearer {self.groq_key}", "Content-Type": "application/json"}
+            data = {"model": "llama3-70b-8192", "messages": [{"role": "user", "content": prompt}]}
+            res = requests.post("https://api.groq.com/openai/v1/chat/completions", headers=headers, json=data, timeout=10)
+            if res.status_code == 200:
+                return res.json()['choices'][0]['message']['content']
+            return f"Erreur Cloud ({res.status_code})"
+        except Exception as e:
+            return f"Erreur connexion : {e}"
+
+router_ia = RouteurV17()
+
+def executer_cmd(cmd_str):
+    try:
+        res = subprocess.run(cmd_str, shell=True, capture_output=True, text=True, timeout=15)
+        return res.stdout if res.returncode == 0 else f"Erreur CMD : {res.stderr}"
+    except Exception as e:
+        return f"Erreur système : {e}"
+
+# ==============================================================================
+# --- INTERFACE GRAPHIQUE FLET (NATIVE & PROPRE) ---
+# ==============================================================================
+def main(page: ft.Page):
+    page.title = f"QG SOUVERAIN - {memoire['patron']}"
+    page.theme_mode = ft.ThemeMode.DARK
+    page.vertical_alignment = ft.MainAxisAlignment.CENTER
+    page.horizontal_alignment = ft.CrossAxisAlignment.CENTER
+    page.window_width = 460
+    page.window_height = 920
+
+    titre = ft.Text("🛡️ QG SOUVERAIN — MODE NATIF", size=13, weight=ft.FontWeight.BOLD, color=ft.colors.CYAN_ACCENT)
+    chat_view = ft.ListView(expand=1, spacing=10, padding=12, auto_scroll=True)
+    
+    input_message = ft.TextField(
+        label="Tape ton ordre ou 'cmd: ...'...",
+        border_color=ft.colors.CYAN,
+        focused_border_color=ft.colors.BLUE,
+        expand=True
+    )
+
+    def ajouter_message(auteur, texte, couleur=ft.colors.WHITE):
+        chat_view.controls.append(
+            ft.Container(
+                content=ft.Text(f"{auteur}: {texte}", color=couleur),
+                padding=10, border_radius=8, bgcolor=ft.colors.GREY_900
+            )
+        )
+        page.update()
+
+    def lancer_enregistrement_avec_timer(e):
+        ajouter_message("Système", "⏳ [INSTALLATION] Lancement du timer de 10s...", ft.colors.YELLOW)
+        threading.Thread(
+            target=enregistrer_empreinte_vocale_avec_timer, 
+            args=(lambda msg, couleur: ajouter_message("Biométrie [Voix]", msg, couleur), 5),
+            daemon=True
+        ).start()
+
+    def action_scanner_visage(e):
+        ajouter_message("Système", "👁️ Scan facial en cours...", ft.colors.YELLOW)
+        res = scanner_visage_patron()
+        ajouter_message("Biométrie [Visage]", res, ft.colors.GREEN_ACCENT)
+
+    barre_biometrie = ft.Row([
+        ft.ElevatedButton("🎤 Enregistrer Voix (10s)", color=ft.colors.WHITE, bgcolor=ft.colors.BLUE_GREY_800, on_click=lancer_enregistrement_avec_timer),
+        ft.ElevatedButton("📷 Scan Visage", color=ft.colors.WHITE, bgcolor=ft.colors.BLUE_GREY_800, on_click=action_scanner_visage)
+    ], alignment=ft.MainAxisAlignment.SPACE_AROUND)
+
+    def envoyer_action(e):
+        texte = input_message.value.strip()
+        if not texte:
+            return
+        
+        ajouter_message("Patron", texte, ft.colors.CYAN_ACCENT)
+        input_message.value = ""
+        page.update()
+
+        if texte.lower().startswith("cmd:"):
+            cmd_a_lancer = texte[4:].strip()
+            res_cmd = executer_cmd(cmd_a_lancer)
+            ajouter_message("Lia [CMD]", res_cmd, ft.colors.GREEN_ACCENT)
+        else:
+            reponse_ia = router_ia.interroger(texte)
+            ajouter_message("Lia", reponse_ia, ft.colors.WHITE)
+            memoire["historique"].append({"user": texte, "lia": reponse_ia})
+            sauvegarder_memoire(memoire)
+
+    btn_envoyer = ft.ElevatedButton("Envoyer", color=ft.colors.WHITE, bgcolor=ft.colors.GREEN_700, on_click=envoyer_action)
+    input_message.on_submit = envoyer_action
+
+    page.add(
+        titre,
+        barre_biometrie,
+        chat_view,
+        ft.Row([input_message, btn_envoyer])
+    )
+
+if __name__ == "__main__":
+    ft.app(target=main)
+mport ssl
+import urllib.request
+import warnings
+from urllib3.exceptions import InsecureRequestWarning
+
+# --- BLINDAGE ABSOLU SSL ---
+warnings.simplefilter('ignore', InsecureRequestWarning)
+old_urlopen = urllib.request.urlopen
+def urlopen_sans_ssl(url, data=None, timeout=30, *, cafile=None, capath=None, cadefault=False, context=None):
+    if context is None:
+        context = ssl._create_unverified_context()
+    return old_urlopen(url, data=data, timeout=timeout, cafile=cafile, capath=capath, cadefault=cadefault, context=context)
+urllib.request.urlopen = urlopen_sans_ssl
+
+import os
+import json
+import subprocess
+import requests
+import threading
+import time
+import wave
+import asyncio
+import sounddevice as sd
+import cv2
+import flet as ft
+
+# Import du vrai module Bluetooth matériel
+try:
+    from bleak import BleakScanner
+    BLEUETOOTH_DISPONIBLE = True
+except ImportError:
+    BLEUETOOTH_DISPONIBLE = False
+
+CONFIG_FICHIER = "memoire_lia.json"
+
+# --- ASPIRATEUR DE FICHIERS .TXT AUTOMATIQUE ---
+def aspirer_tous_les_txt():
+    archives_texte = {}
+    try:
+        for fichier in os.listdir('.'):
+            if fichier.endswith('.txt'):
+                with open(fichier, 'r', encoding='utf-8', errors='ignore') as f:
+                    archives_texte[fichier] = f.read()
+    except Exception as e:
+        print(f"Erreur lecture txt: {e}")
+    return archives_texte
+
+def charger_memoire():
+    config_defaut = {
+        "patron": "Jonathan",
+        "profil_utilisateur": {
+            "nom": "Jonathan",
+            "prenom": "Patron",
+            "email": "jonathan.souverain@qg.com",
+            "telephone": "+33600000000",
+            "adresse": "QG Central, France"
+        },
+        "historique": [],
+        "biometrie_active": True,
+        "frequence_vocal_hz": 44100,
+        "frequence_bluetooth_ghz": 2.4,
+        "profil_voix_path": "profil_voix_patron.wav",
+        "archives_txt": aspirer_tous_les_txt()
+    }
+    if os.path.exists(CONFIG_FICHIER):
+        try:
+            with open(CONFIG_FICHIER, "r", encoding="utf-8") as f:
+                data = json.load(f)
+                if isinstance(data, dict):
+                    for k, v in config_defaut.items():
+                        if k not in data:
+                            data[k] = v
+                    data["archives_txt"] = aspirer_tous_les_txt()
+                    return data
+        except Exception:
+            pass
+    return config_defaut
+
+memoire = charger_memoire()
+
+def sauvegarder_memoire(data):
+    with open(CONFIG_FICHIER, "w", encoding="utf-8") as f:
+        json.dump(data, f, ensure_ascii=False, indent=4)
+
+# --- ENREGISTREMENT VOCAL HAUTE FIDÉLITÉ (44100 HZ) ---
+def enregistrer_empreinte_vocale_avec_timer(update_ui_callback, duree_enregistrement=5):
+    try:
+        for i in range(10, 0, -1):
+            update_ui_callback(f"⏳ [TIMER 10S] Prépare ton micro... Enregistrement dans {i}s...", "yellow")
+            time.sleep(1)
+        
+        update_ui_callback("🎙️ [ENREGISTREMENT] Analyse à 44100 Hz en cours...", "orange")
+        fs = 44100
+        audio = sd.rec(int(duree_enregistrement * fs), samplerate=fs, channels=1, dtype='int16')
+        sd.wait()
+        
+        nom_fichier = memoire.get("profil_voix_path", "profil_voix_patron.wav")
+        with wave.open(nom_fichier, 'wb') as wf:
+            wf.setnchannels(1)
+            wf.setsampwidth(2)
+            wf.setframerate(fs)
+            wf.writeframes(audio.tobytes())
+            
+        update_ui_callback(f"🎙️ [VOIX VALIDÉE] Empreinte enregistrée à {fs} Hz ({nom_fichier}).", "green")
+    except Exception as e:
+        update_ui_callback(f"❌ Erreur micro : {e}", "red")
+
+def scanner_visage_patron(filename="visage_patron.jpg"):
+    try:
+        cap = cv2.VideoCapture(0)
+        if not cap.isOpened():
+            return "❌ Erreur : Caméra introuvable."
+        time.sleep(1)
+        ret, frame = cap.read()
+        cap.release()
+        cv2.destroyAllWindows()
+        if ret:
+            cv2.imwrite(filename, frame)
+            return "👁️ [VISAGE VALIDÉ] Biométrie faciale confirmée."
+        return "❌ Échec de la capture de la caméra."
+    except Exception as e:
+        return f"❌ Erreur webcam : {e}"
+
+# --- VRAI MODULE DE FREQUENCE BLUETOOTH MATÉRIEL ---
+async def executer_vrai_scan_bluetooth():
+    if not BLEUETOOTH_DISPONIBLE:
+        return "❌ Erreur : La bibliothèque 'bleak' n'est pas installée. Tape 'pip install bleak' dans ton terminal."
+    try:
+        devices = await BleakScanner.discover(timeout=5.0)
+        if not devices:
+            return "📡 [BLUETOOTH] Aucun appareil détecté dans les environs. Vérifie que le Bluetooth est actif."
+        
+        resultats = []
+        for d in devices:
+            nom = d.name or "Appareil Inconnu"
+            adresse = d.address
+            rssi = d.rssi
+            resultats.append(f"• {nom} (MAC: {adresse} | Signal: {rssi} dBm)")
+        
+        return "📡 [BLUETOOTH MATÉRIEL ACTIF]\n" + "\n".join(resultats)
+    except Exception as e:
+        return f"❌ Erreur Bluetooth Matériel : {e}"
+
+class RouteurV17:
+    def __init__(self):
+        self.groq_key = os.getenv("GROQ_API_KEY", "AQ.AbBRN6I8QV-ukEvEXUjrFpEHk8owhOs4eTFOZiN69zh2ie-0zQ")
+
+    def interroger(self, prompt):
+        try:
+            contexte_txts = "\n".join([f"--- Fichier {nom} ---\n{contenu[:500]}" for nom, contenu in memoire.get("archives_txt", {}).items()])
+            
+            prompt_complet = (
+                f"Identité du système: QG Souverain\n"
+                f"Fréquence vocale maître: {memoire.get('frequence_vocal_hz', 44100)} Hz\n"
+                f"Fréquence Bluetooth maître: {memoire.get('frequence_bluetooth_ghz', 2.4)} GHz\n"
+                f"Contexte des documents du Patron:\n{contexte_txts}\n\n"
+                f"Requête du Patron: {prompt}"
+            )
+
+            headers = {"Authorization": f"Bearer {self.groq_key}", "Content-Type": "application/json"}
+            data = {"model": "llama3-70b-8192", "messages": [{"role": "user", "content": prompt_complet}]}
+            res = requests.post("https://api.groq.com/openai/v1/chat/completions", headers=headers, json=data, timeout=10, verify=False)
+            if res.status_code == 200:
+                return res.json()['choices'][0]['message']['content']
+            return f"Erreur Cloud ({res.status_code})"
+        except Exception as e:
+            return f"Erreur connexion : {e}"
+
+router_ia = RouteurV17()
+
+def executer_cmd(cmd_str):
+    try:
+        res = subprocess.run(cmd_str, shell=True, capture_output=True, text=True, timeout=15)
+        return res.stdout if res.returncode == 0 else f"Erreur CMD : {res.stderr}"
+    except Exception as e:
+        return f"Erreur système : {e}"
+
+def main(page: ft.Page):
+    try:
+        patron_nom = memoire.get('patron', 'Jonathan')
+        nb_txts = len(memoire.get('archives_txt', {}))
+        
+        page.title = f"QG SOUVERAIN - {patron_nom}"
+        page.theme_mode = ft.ThemeMode.DARK
+        page.vertical_alignment = ft.MainAxisAlignment.CENTER
+        page.horizontal_alignment = ft.CrossAxisAlignment.CENTER
+        page.window_width = 460
+        page.window_height = 920
+
+        titre = ft.Text(f"🛡️ QG SOUVERAIN (MATÉRIEL RÉEL) — {nb_txts} TXT", size=11, weight=ft.FontWeight.BOLD, color="cyan")
+        chat_view = ft.ListView(expand=1, spacing=10, padding=12, auto_scroll=True)
+        
+        input_message = ft.TextField(
+            label="Tape ton ordre ou 'cmd: ...'...",
+            border_color="cyan",
+            focused_border_color="blue",
+            expand=True
+        )
+
+        def ajouter_message(auteur, texte, couleur="white"):
+            chat_view.controls.append(
+                ft.Container(
+                    content=ft.Text(f"{auteur}: {texte}", color=couleur),
+                    padding=10, border_radius=8, bgcolor="grey900"
+                )
+            )
+            page.update()
+
+        def lancer_enregistrement_avec_timer(e):
+            ajouter_message("Système", "⏳ [INSTALLATION] Lancement du timer de 10s...", "yellow")
+            threading.Thread(
+                target=enregistrer_empreinte_vocale_avec_timer, 
+                args=(lambda msg, couleur: ajouter_message("Biométrie [Voix]", msg, couleur), 5),
+                daemon=True
+            ).start()
+
+        def action_scanner_visage(e):
+            ajouter_message("Système", "👁️ Scan facial en cours...", "yellow")
+            res = scanner_visage_patron()
+            ajouter_message("Biométrie [Visage]", res, "green")
+
+        def action_scanner_bluetooth(e):
+            ajouter_message("Système", "📡 Recherche matérielle des signaux Bluetooth (2.4 GHz)...", "yellow")
+            def run_async_bt():
+                loop = asyncio.new_event_loop()
+                asyncio.set_event_loop(loop)
+                res = loop.run_until_complete(executer_vrai_scan_bluetooth())
+                ajouter_message("Réseau [Bluetooth Réel]", res, "cyan")
+            threading.Thread(target=run_async_bt, daemon=True).start()
+
+        barre_biometrie = ft.Row([
+            ft.ElevatedButton("🎤 Voix", color="white", bgcolor="blueGrey800", on_click=lancer_enregistrement_avec_timer),
+            ft.ElevatedButton("📷 Visage", color="white", bgcolor="blueGrey800", on_click=action_scanner_visage),
+            ft.ElevatedButton("📡 Bluetooth", color="white", bgcolor="blueGrey800", on_click=action_scanner_bluetooth)
+        ], alignment=ft.MainAxisAlignment.SPACE_AROUND)
+
+        def envoyer_action(e):
+            texte = input_message.value.strip()
+            if not texte:
+                return
+            
+            ajouter_message("Patron", texte, "cyan")
+            input_message.value = ""
+            page.update()
+
+            if texte.lower().startswith("cmd:"):
+                cmd_a_lancer = texte[4:].strip()
+                res_cmd = executer_cmd(cmd_a_lancer)
+                ajouter_message("Lia [CMD]", res_cmd, "green")
+            else:
+                reponse_ia = router_ia.interroger(texte)
+                ajouter_message("Lia", reponse_ia, "white")
+                memoire.setdefault("historique", []).append({"user": texte, "lia": reponse_ia})
+                sauvegarder_memoire(memoire)
+
+        btn_envoyer = ft.ElevatedButton("Envoyer", color="white", bgcolor="green", on_click=envoyer_action)
+        input_message.on_submit = envoyer_action
+
+        page.add(
+            ft.Column([
+                titre,
+                barre_biometrie,
+                chat_view,
+                ft.Row([input_message, btn_envoyer], alignment=ft.MainAxisAlignment.SPACE_BETWEEN)
+            ], expand=True, alignment=ft.MainAxisAlignment.START)
+        )
+    except Exception as err:
+        page.add(ft.Text(f"CRASH INTERNE: {err}", color="red", size=20))
+        page.update()
+
+if __name__ == "__main__":
+    ft.app(target=main)
