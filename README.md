@@ -3094,23 +3094,21 @@ def enregistrer_empreinte_vocale_avec_timer(update_ui_callback, duree_enregistre
         audio = sd.rec(int(duree_enregistrement * fs), samplerate=fs, channels=1, dtype='int16')
         sd.wait()
         
-        # Sauvegarde du fichier maître pour liaison avec les futurs modèles
-        nom_fichier = memoire.get("profil_voix_path", "profil_voix_patron.wav")
-        with wave.open(nom_fichier, 'wb') as wf:
-            wf.setnchannels(1)
-            wf.setsampwidth(2)
-            wf.setframerate(fs)
-            wf.writeframes(audio.tobytes())
-            
-        update_ui_callback(f"🎙️ [VOIX VALIDÉE] Empreinte enregistrée à {fs} Hz ({nom_fichier}).", "green")
-    except Exception as e:
-        update_ui_callback(f"❌ Erreur micro : {e}", "red")
-
+# Sauvegarde du fichier maître pour liaison avec les futurs modèles
+nom_fichier = memoire.get("profil_voix_path", "profil_voix_patron.wav")
+with wave.open(nom_fichier, 'wb') as wf:
+wf.setnchannels(1)
+wf.setsampwidth(2)
+wf.setframerate(fs)
+wf.writeframes(audio.tobytes())
+update_ui_callback(f"🎙️ [VOIX VALIDÉE] Empreinte enregistrée à {fs} Hz ({nom_fichier}).", "green")
+except Exception as e:
+update_ui_callback(f"❌ Erreur micro : {e}", "red")
 def scanner_visage_patron(filename="visage_patron.jpg"):
-    try:
-        cap = cv2.VideoCapture(0)
-        if not cap.isOpened():
-            return "❌ Erreur : Caméra introuvable."
+try:
+cap = cv2.VideoCapture(0)
+if not cap.isOpened():
+ return "❌ Erreur : Caméra introuvable."
         time.sleep(1)
         ret, frame = cap.read()
         cap.release()
@@ -3122,21 +3120,19 @@ def scanner_visage_patron(filename="visage_patron.jpg"):
     except Exception as e:
         return f"❌ Erreur webcam : {e}"
 
-class RouteurV17:
-    def __init__(self):
-        self.groq_key = os.getenv("GROQ_API_KEY", "AQ.AbBRN6I8QV-ukEvEXUjrFpEHk8owhOs4eTFOZiN69zh2ie-0zQ")
-
-    def interroger(self, prompt):
-        try:
-            contexte_txts = "\n".join([f"--- Fichier {nom} ---\n{contenu[:500]}" for nom, contenu in memoire.get("archives_txt", {}).items()])
-            
-            # Injection de l'identité vocale et des paramètres du Patron dans le prompt système
-            prompt_complet = (
-                f"Identité du système: QG Souverain\n"
-                f"Fréquence vocale maître: {memoire.get('frequence_vocal_hz', 44100)} Hz\n"
-                f"Contexte des documents du Patron:\n{contexte_txts}\n\n"
-                f"Requête du Patron: {prompt}"
-            )
+##class RouteurV17:
+def __init__(self):
+self.groq_key = os.getenv("GROQ_API_KEY", "AQ.AbBRN6I8QV-ukEvEXUjrFpEHk8owhOs4eTFOZiN69zh2ie-0zQ.env")
+def interroger(self, prompt):
+try:
+contexte_txts = "\n".join([f"--- Fichier {john_ai} ---\n{contenu[:500]}" for nom, contenu in memoire.get("archives_txt", {}).items()])
+ # Injection de l'identité vocale et des paramètres du Patron dans le prompt système
+prompt_complet = (
+f"Identité du système: QG Souverain\n"
+f"Fréquence vocale maître: {memoire.get('frequence_vocal_hz', 44100)} Hz\n"
+f"Contexte des documents du Patron:\n{contexte_txts}\n\n"
+f"Requête du Patron: {prompt}"
+)
 
             headers = {"Authorization": f"Bearer {self.groq_key}", "Content-Type": "application/json"}
             data = {"model": "llama3-70b-8192", "messages": [{"role": "user", "content": prompt_complet}]}
