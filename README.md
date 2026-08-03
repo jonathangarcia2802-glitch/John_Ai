@@ -120,25 +120,26 @@ self.cle_api = "{cle_api}"
 self.url = "{url_corrigee}"
 self.instruction_systeme = (
 "Tu es l'associé IA du patron. Tu es un ingénieur expert en Python. "
- "Génère UNIQUEMENT du code Python propre, optimisé et commenté. "
+"Génère UNIQUEMENT du code Python propre, optimisé et commenté. "
 "Pas de bavardage, pas de texte introductif, donne directement le script."
 )
 
 def interroger_gemini(self, prompt):
 payload = {{"contents": [{{"parts": [{{"text": prompt}}]}}], "systemInstruction": {{"parts": [{{"text": self.instruction_systeme}}]}}}}
-        headers = {{"Content-Type": "application/json"}}
-        try:
-            reponse = requests.post(self.url, json=payload, headers=headers)
-            data = reponse.json()
-            if 'candidates' in data and len(data['candidates']) > 0:
-                candidate = data['candidates'][0]
-                if 'content' in candidate and 'parts' in candidate['content']:
-                    parts = candidate['content']['parts']
-                    if len(parts) > 0 and 'text' in parts[0]:
-                        return parts[0]['text']
-            return "[ERREUR API] : Le cerveau Gemini a refusé la requête. Clé ou quota expiré."
-        except Exception as e:
-            return f"[ERREUR SYSTEME] : {{e}}"
+headers = {{"Content-Type": "application/json"}}
+try:
+reponse = requests.post(self.url, json=payload, headers=headers)
+data = reponse.json()
+if 'candidates' in data and len(data['candidates']) > 0:
+candidate = data['candidates'][0]
+if 'content' in candidate and 'parts' in candidate['content']:
+parts = candidate['content']['parts']
+if len(parts) > 0 and 'text' in parts[0]:
+return parts[0]['text']
+return "[ERREUR API] : Le cerveau Gemini a refusé la requête. Clé ou quota expiré."
+except Exception as e:
+
+return f"[ERREUR SYSTEME] : {{e}}"
 
 def action_envoyer():
     ordre = entree_texte.get("1.0", tk.END).strip()
