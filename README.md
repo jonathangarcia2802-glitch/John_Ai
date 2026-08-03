@@ -24,8 +24,7 @@ payload = {
 try:
 reponse = requests.post(url_local, json=payload)
 texte_ia = reponse.json()['response']
-print("\n[IA OPEN SOURCE LOCAL] :\n", texte_ia)
-except Exception as e:
+print("\n[IA OPEN SOURCE LOCAL] :\n", texte_ia)except Exception as e:
 print("[ERREUR] : Ollama n'est pas démarré sur le PC.", e)
 [trans.py](https://github.com/user-attachments/files/30623992/trans.py)
 import os
@@ -95,7 +94,6 @@ import tkinter as tk
 from tkinter import messagebox, scrolledtext
 import requests
 import threading
-git init
 class QG_Advanced_UI:
 def __init__(self):
 self.cle_api = "{cle_api}"
@@ -122,7 +120,7 @@ except Exception as e:
 return f"[ERREUR SYSTEME] : {{e}}"
 def action_envoyer():
 ordre = entree_texte.get("1.0", tk.END).strip()
-if not ordre: retur
+if not ordre: return
 lancer_traitement(ordre)
 def lancer_traitement(texte_ordre):
 zone_reponse.delete("1.0", tk.END)
@@ -178,9 +176,11 @@ label_statut.pack(side="bottom", fill="x", padx=10, pady=5)fenetre.mainloop()
 """with open("ia_clavier.py", "w", encoding="utf-8") as f:
 f.write(code_propre)
 print("[2/3] CODE INJECTÉ : 'ia_clavier.py' réécrit avec la bonne adresse de Google.")
+
 # 3. RELANCEMENT AUTOMATIQUE DU RECTANGLE DE COMMANDEMENT
 print("[3/3] RELANCEMENT IMMINENT... Tu peux aller te coucher, patron.")
 print("=============================================\n")
+
 # Exécute de manière totalement indépendante l'interface corrigée
  subprocess.Popen([sys.executable, "ia_clavier.py"])
 if __name__ == "__main__":
