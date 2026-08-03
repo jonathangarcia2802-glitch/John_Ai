@@ -35,14 +35,13 @@ import os
 
 # On donne le chemin direct vers l'exécutable Git
 git_cmd = r'"C:\Program Files\Git\cmd\git.exe"'
-
 os.system(f"{git_cmd} add .")
 os.system(f'{git_cmd} commit -m "Premier transfert officiel de John IA"')
 os.system(f"{git_cmd} push")
 [texte.py](https://github.com/user-attachments/files/30623996/texte.py)
 import os
 C:\Users\User\Desktop\john_ai>ssh
-usage: ssh [-46AaCfGgKkMNnqsTtVvXxYy] [-B bind_interface]
+usage: ssh [-46AaCfGgKkMNnqsTtVvXxYy.env] [-B bind_interface]
 [-b bind_address] [-c cipher_spec] [-D [bind_address:]port]
 [-E log_file] [-e escape_char] [-F configfile] [-I pkcs11]
 [-i identity_file] [-J [user@]host[:port]] [-L address]
