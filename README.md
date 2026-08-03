@@ -145,16 +145,16 @@ def action_envoyer():
     lancer_traitement(ordre)
 
 def lancer_traitement(texte_ordre):
-    zone_reponse.delete("1.0", tk.END)
-    zone_reponse.insert(tk.END, "[TRACKING] : Transmission au cerveau Gemini v1.5...\\n")
-    canvas_led_gemini.itemconfig(led_gemini, fill="#ffa500")
-    fenetre.update()
+zone_reponse.delete("1.0", tk.END)
+zone_reponse.insert(tk.END, "[TRACKING] : Transmission au cerveau Gemini v1.5...\\n")
+canvas_led_gemini.itemconfig(led_gemini, fill="#ffa500")
+fenetre.update()
+def calcul_thread():
+code_traduit = core.interroger_gemini(texte_ordre)
+zone_reponse.delete("1.0", tk.END)
+zone_reponse.insert(tk.END, code_traduit)
 
-    def calcul_thread():
-        code_traduit = core.interroger_gemini(texte_ordre)
-        zone_reponse.delete("1.0", tk.END)
-        zone_reponse.insert(tk.END, code_traduit)
-        if "[ERREUR]" in code_traduit or "SYSTEME" in code_traduit:
+if "[ERREUR]" in code_traduit or "SYSTEME" in code_traduit:
             canvas_led_gemini.itemconfig(led_gemini, fill="#ff0000")
             label_statut.config(text="Statut : Liaison interrompue.", fg="#ff0000")
         else:
@@ -206,9 +206,10 @@ fenetre.mainloop()
 with open("ia_clavier.py", "w", encoding="utf-8") as f:
 f.write(code_propre)
 print("[2/3] CODE INJECTÉ : 'ia_clavier.py' réécrit avec la bonne adresse de Google.")
- # 3. RELANCEMENT AUTOMATIQUE DU RECTANGLE DE COMMANDEMENT
+# 3. RELANCEMENT AUTOMATIQUE DU RECTANGLE DE COMMANDEMENT
 print("[3/3] RELANCEMENT IMMINENT... Tu peux aller te coucher, patron.")
 print("=============================================\n")
+
 # Exécute de manière totalement indépendante l'interface corrigée
  subprocess.Popen([sys.executable, "ia_clavier.py"])
 if __name__ == "__main__":
@@ -226,22 +227,19 @@ print(f"-> Clé API principale : {api_status}")
 print(f"-> Port cible : {os.getenv('TARGET_PORT', '5000 (par défaut)')}")
 print(f"-> Environnement : {os.getenv('HOSTING_ENVIRONMENT', 'Hugging Face')}")
 print("---------------------------------------------")
-
 if __name__ == "__main__":
-    verifier_connexion_systeme()
-    import os
+verifier_connexion_systeme()
+import os
 import json
 import asyncio
-import subprocess
 import wave
 import requests
 import sounddevice as sd
 import cv2
 import flet as ft
-
 try:
-    from bleak import BleakScanner
-    BLEUETOOTH_DISPONIBLE = True
+from bleak import BleakScanner
+BLEUETOOTH_DISPONIBLE = True
 except ImportError:
     BLEUETOOTH_DISPONIBLE = False
 
