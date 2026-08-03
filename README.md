@@ -138,7 +138,6 @@ if len(parts) > 0 and 'text' in parts[0]:
 return parts[0]['text']
 return "[ERREUR API] : Le cerveau Gemini a refusé la requête. Clé ou quota expiré."
 except Exception as e:
-
 return f"[ERREUR SYSTEME] : {{e}}"
 
 def action_envoyer():
@@ -172,32 +171,25 @@ fenetre = tk.Tk()
 fenetre.title("MEC DE LA SÉCURITÉ V8 - CONSOLE SUPRÊME")
 fenetre.geometry("900x650")
 fenetre.configure(bg="#0a0a0c")
-
 frame_titre = tk.Frame(fenetre, bg="#141419", height=50, bd=1, relief="groove")
 frame_titre.pack(fill="x", padx=10, pady=5)
 tk.Label(frame_titre, text="🎛️ SYSTEM OPERATIONAL CONTROL v8.2", font=("Courier", 14, "bold"), bg="#141419", fg="#00ff00").pack(pady=10)
-
 panel_ia = tk.Frame(fenetre, bg="#111115", width=220, bd=1, relief="solid")
 panel_ia.pack(side="left", fill="y", padx=10, pady=5)
 tk.Label(panel_ia, text=" AGENTS CONNECTÉS ", font=("Courier", 10, "bold"), bg="#1d1d24", fg="white").pack(fill="x", pady=5)
-
 frame_john = tk.Frame(panel_ia, bg="#16161e", bd=1, relief="ridge")
 frame_john.pack(fill="x", padx=5, pady=10)
-
-
 info_john = tk.Frame(frame_john, bg="#16161e")
 info_john.pack(side="left", fill="both", expand=True, padx=5)
 tk.Label(info_john, text="John AI\\n(Cerveau)", font=("Arial", 9), bg="#16161e", fg="white", justify="left").pack(anchor="w")
 canvas_led_gemini = tk.Canvas(info_john, width=20, height=20, bg="#16161e", highlightthickness=0)
 canvas_led_gemini.pack(anchor="w", pady=2)
 led_gemini = canvas_led_gemini.create_oval(2, 2, 16, 16, fill="#00ff00")
-
 panel_droite = tk.Frame(fenetre, bg="#0a0a0c")
 panel_droite.pack(side="right", fill="both", expand=True, padx=5, pady=5)
 tk.Label(panel_droite, text="⚡ REQUÊTE COMMANDE (FRANÇAIS) :", font=("Courier", 10, "bold"), bg="#0a0a0c", fg="#00ff00").pack(anchor="w", padx=5)
 entree_texte = scrolledtext.ScrolledText(panel_droite, height=4, bg="#141419", fg="white", insertbackground="white", font=("Consolas", 11), bd=1, relief="solid")
 entree_texte.pack(fill="x", padx=5, pady=5)
-
 frame_boutons = tk.Frame(panel_droite, bg="#0a0a0c")
 frame_boutons.pack(fill="x", pady=5)
 btn_envoyer = tk.Button(frame_boutons, text="📡 DEMANDER LA TRADUCTION PYTHON", font=("Courier", 10, "bold"), bg="#00ff00", fg="black", command=action_envoyer, activebackground="#33ff33", cursor="hand2")
