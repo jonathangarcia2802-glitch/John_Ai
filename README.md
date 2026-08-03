@@ -1,9 +1,8 @@
 [reparation_qg.py](https://github.com/user-attachments/files/30625693/reparation_qg.py)
+[john_passerelle2_privee.py(https://github.com/userattachments/files/30625659/john_passerelle2_privee.py)
 
-[john_passerelle2_privee.py](https://github.com/user-attachments/files/30625659/john_passerelle2_privee.py)
 ## Description
 Mon projet d'IA locale connectée à un serveur de déploiement continu.
-
 ## Architecture
 - **GitHub :** Sauvegarde et codage sécurisé.
 - **Serveur Cloud (Unnug) :** Synchro automatique en arrière-plan
@@ -237,7 +236,6 @@ except ImportError:
 CONFIG_DIR = "qg_souverain_core"
 os.makedirs(CONFIG_DIR, exist_ok=True)
 CONFIG_FICHIER = os.path.join(CONFIG_DIR, "memoire_lia.json")
-
 def charger_memoire():
     config_defaut = {
         "patron": "Jonathan",
