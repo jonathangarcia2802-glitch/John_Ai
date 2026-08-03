@@ -212,35 +212,30 @@ label_statut.pack(side="bottom", fill="x", padx=10, pady=5)
 fenetre.mainloop()
 """
 
-    with open("ia_clavier.py", "w", encoding="utf-8") as f:
-        f.write(code_propre)
-    print("[2/3] CODE INJECTÉ : 'ia_clavier.py' réécrit avec la bonne adresse de Google.")
+with open("ia_clavier.py", "w", encoding="utf-8") as f:
+f.write(code_propre)
+print("[2/3] CODE INJECTÉ : 'ia_clavier.py' réécrit avec la bonne adresse de Google.")
+ # 3. RELANCEMENT AUTOMATIQUE DU RECTANGLE DE COMMANDEMENT
+print("[3/3] RELANCEMENT IMMINENT... Tu peux aller te coucher, patron.")
+print("=============================================\n")
+# Exécute de manière totalement indépendante l'interface corrigée
+ subprocess.Popen([sys.executable, "ia_clavier.py"])
+if __name__ == "__main__":
+reparer_et_relancer()
 
-    # 3. RELANCEMENT AUTOMATIQUE DU RECTANGLE DE COMMANDEMENT
-    print("[3/3] RELANCEMENT IMMINENT... Tu peux aller te coucher, patron.")
-    print("=============================================\n")
-    
-    # Exécute de manière totalement indépendante l'interface corrigée
-    subprocess.Popen([sys.executable, "ia_clavier.py"])
-
- if __name__ == "__main__":
-    reparer_et_relancer()
 import os
 import requests
 
 def verifier_connexion_systeme():
-    print("--- VÉRIFICATION DES CONNEXIONS (PORT 5000) ---")
-    
-    # Vérification des variables d'environnement chargées
-    ngrok_status = "Présente" if os.getenv("NGROK_AUTH_TOKEN") else "Manquante ou non détectée"
-    api_status = "Présente" if os.getenv("API_KEY_PRIMARY") else "Manquante ou non détectée"
-    
-    print(f"-> Token Ngrok : {ngrok_status}")
-    print(f"-> Clé API principale : {api_status}")
-    print(f"-> Port cible : {os.getenv('TARGET_PORT', '5000 (par défaut)')}")
-    print(f"-> Environnement : {os.getenv('HOSTING_ENVIRONMENT', 'Hugging Face')}")
-    
-    print("---------------------------------------------")
+print("--- VÉRIFICATION DES CONNEXIONS (PORT 5000) ---")
+# Vérification des variables d'environnement chargées
+ngrok_status = "Présente" if os.getenv("NGROK_AUTH_TOKEN") else "Manquante ou non détectée"
+api_status = "Présente" if os.getenv("API_KEY_PRIMARY") else "Manquante ou non détectée"
+print(f"-> Token Ngrok : {ngrok_status}")
+print(f"-> Clé API principale : {api_status}")
+print(f"-> Port cible : {os.getenv('TARGET_PORT', '5000 (par défaut)')}")
+print(f"-> Environnement : {os.getenv('HOSTING_ENVIRONMENT', 'Hugging Face')}")
+print("---------------------------------------------")
 
 if __name__ == "__main__":
     verifier_connexion_systeme()
