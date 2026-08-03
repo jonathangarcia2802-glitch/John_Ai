@@ -1,5 +1,6 @@
 [reparation_qg.py](https://github.com/user-attachments/files/30625693/reparation_qg.py)
-[john_passerelle2_privee.py(https://github.com/userattachments/files/30625659/john_passerelle2_privee.py)
+
+[john_passerelle2_privee.py(https://github.com/userattachments/files/30625659/john_passerelle2_privee.py)]
 
 ## Description
 Mon projet d'IA locale connectée à un serveur de déploiement continu.
@@ -12,10 +13,8 @@ privee_url = ngrok.connect(5000)
 public_url = ngrok.connect(11434)
 print("URL NGROK OLLAMA :", privee_url)[maas.py](https://github.com/user-attachments/files/30623029/maas.py)
 import requests
-
 # L'adresse locale d'Ollama sur ton PC
 192.168.1.61:11434/v1 = "http://localhost:11434/api/generate"
-
 # On demande au modèle Open Source (ex: Mistral ou Llama)
 payload = {
 "model": "mistral",
@@ -38,14 +37,10 @@ os.system(f"{git_cmd} push")
 [texte.py](https://github.com/user-attachments/files/30623996/texte.py)
 import os
 
-pip install python-dotenv
-
-pip install gpiozero
-
-python main.py
-
-pip install litellm hugginface
-
+install python-dotenv
+install gpiozero
+install python main.py
+install litellm hugginface
 import os
 from flask import Flask, request, jsonify
 from flask_cors import CORS
@@ -93,16 +88,14 @@ return jsonify({
 [john_ai.starting.txt](https://github.com/user-attachments/files/30625669/john_ai.starting.txt)
 <img width="640" height="480" alt="visage_patron" src="https://github.com/user-attachments/assets/170c2433-9b09-4072-87cf-7fc20ffedfb0" />
 [trans.py](https://github.com/user-attachments/files/30625668/trans.py)
-
 if __name__ == '__main__':
 [john-ai.py](https://github.com/user-attachments/files/30625663/john_v6.py)
 app.run(host='0.0.0.0', port=5000, debug=False)
-    
 import tkinter as tk
 from tkinter import messagebox, scrolledtext
 import requests
 import threading
-
+git init
 class QG_Advanced_UI:
 def __init__(self):
 self.cle_api = "{cle_api}"
@@ -112,7 +105,6 @@ self.instruction_systeme = (
 "Génère UNIQUEMENT du code Python propre, optimisé et commenté. "
 "Pas de bavardage, pas de texte introductif, donne directement le script."
 )
-
 def interroger_gemini(self, prompt):
 payload = {{"contents": [{{"parts": [{{"text": prompt}}]}}], "systemInstruction": {{"parts": [{{"text": self.instruction_systeme}}]}}}}
 headers = {{"Content-Type": "application/json"}}
@@ -128,12 +120,10 @@ return parts[0]['text']
 return "[ERREUR API] : Le cerveau Gemini a refusé la requête. Clé ou quota expiré."
 except Exception as e:
 return f"[ERREUR SYSTEME] : {{e}}"
-
 def action_envoyer():
-    ordre = entree_texte.get("1.0", tk.END).strip()
-    if not ordre: return
-    lancer_traitement(ordre)
-
+ordre = entree_texte.get("1.0", tk.END).strip()
+if not ordre: retur
+lancer_traitement(ordre)
 def lancer_traitement(texte_ordre):
 zone_reponse.delete("1.0", tk.END)
 zone_reponse.insert(tk.END, "[TRACKING] : Transmission au cerveau Gemini v1.5...\\n")
@@ -143,18 +133,15 @@ def calcul_thread():
 code_traduit = core.interroger_gemini(texte_ordre)
 zone_reponse.delete("1.0", tk.END)
 zone_reponse.insert(tk.END, code_traduit)
-
 if "[ERREUR]" in code_traduit or "SYSTEME" in code_traduit:
-            canvas_led_gemini.itemconfig(led_gemini, fill="#ff0000")
-            label_statut.config(text="Statut : Liaison interrompue.", fg="#ff0000")
-        else:
-            canvas_led_gemini.itemconfig(led_gemini, fill="#00ff00")
-            label_statut.config(text="Statut : Script Python gravé dans 'code_traduit.py' !", fg="#00ff00")
-            with open("code_traduit.py", "w", encoding="utf-8") as f:
-                f.write(code_traduit)
-
-    threading.Thread(target=calcul_thread).start()
-
+canvas_led_gemini.itemconfig(led_gemini, fill="#ff0000")
+label_statut.config(text="Statut : Liaison interrompue.", fg="#ff0000")
+else:
+canvas_led_gemini.itemconfig(led_gemini, fill="#00ff00")
+label_statut.config(text="Statut : Script Python gravé dans 'code_traduit.py' !", fg="#00ff00")
+with open("code_traduit.py", "w", encoding="utf-8") as f:
+f.write(code_traduit)
+threading.Thread(target=calcul_thread).start()
 core = QG_Advanced_UI()
 fenetre = tk.Tk()
 fenetre.title("MEC DE LA SÉCURITÉ V8 - CONSOLE SUPRÊME")
@@ -183,28 +170,21 @@ frame_boutons = tk.Frame(panel_droite, bg="#0a0a0c")
 frame_boutons.pack(fill="x", pady=5)
 btn_envoyer = tk.Button(frame_boutons, text="📡 DEMANDER LA TRADUCTION PYTHON", font=("Courier", 10, "bold"), bg="#00ff00", fg="black", command=action_envoyer, activebackground="#33ff33", cursor="hand2")
 btn_envoyer.pack(fill="x", padx=5, pady=5)
-
 tk.Label(panel_droite, text="💾 SCRIPT PYTHON TRADUIT ET GRAVÉ :", font=("Courier", 10, "bold"), bg="#0a0a0c", fg="#00ff00").pack(anchor="w", padx=5, pady=5)
 zone_reponse = scrolledtext.ScrolledText(panel_droite, height=18, bg="#000000", fg="#39ff14", insertbackground="#39ff14", font=("Consolas", 11), bd=1, relief="solid")
 zone_reponse.pack(fill="both", expand=True, padx=5, pady=5)
-
 label_statut = tk.Label(fenetre, text="Statut : Liaison réseau établie. En attente du Patron.", font=("Courier", 10, "italic"), bg="#141419", fg="white", bd=1, relief="sunken", anchor="w")
-label_statut.pack(side="bottom", fill="x", padx=10, pady=5)
-fenetre.mainloop()
-"""
-
-with open("ia_clavier.py", "w", encoding="utf-8") as f:
+label_statut.pack(side="bottom", fill="x", padx=10, pady=5)fenetre.mainloop()
+"""with open("ia_clavier.py", "w", encoding="utf-8") as f:
 f.write(code_propre)
 print("[2/3] CODE INJECTÉ : 'ia_clavier.py' réécrit avec la bonne adresse de Google.")
 # 3. RELANCEMENT AUTOMATIQUE DU RECTANGLE DE COMMANDEMENT
 print("[3/3] RELANCEMENT IMMINENT... Tu peux aller te coucher, patron.")
 print("=============================================\n")
-
 # Exécute de manière totalement indépendante l'interface corrigée
  subprocess.Popen([sys.executable, "ia_clavier.py"])
 if __name__ == "__main__":
 reparer_et_relancer()
-
 import os
 import requests
 def verifier_connexion_systeme():
