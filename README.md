@@ -668,64 +668,56 @@ FICHIER_HISTORIQUE = "historique_patron.json"
 MOT_DE_PASSE_VOCAL = "peseta"
 
 def ia_execute_commande_cmd(commande):
-    """Cette fonction permet à l'IA de taper elle-même des ordres dans ton CMD."""
-    print(f"[ROBOT AUTONOME] -> J'exécute la commande dans le CMD : {commande}")
-    try:
-        # Le robot ouvre un terminal invisible et tape la commande à ta place
-        resultat = subprocess.run(commande, shell=True, capture_output=True, text=True, timeout=15)
-        if resultat.returncode == 0:
-            print("[ROBOT] -> Commande réussie.")
-            return f"Succès : {resultat.stdout}"
-        else:
-            print(f"[ROBOT] -> Erreur lors de l'exécution : {resultat.stderr}")
-            return f"Erreur : {resultat.stderr}"
-    except Exception as e:
-        return f"Échec critique du robot : {str(e)}"
+"""Cette fonction permet à l'IA de taper elle-même des ordres dans ton CMD."""
+print(f"[ROBOT AUTONOME] -> J'exécute la commande dans le CMD : {commande}")
+try:
+# Le robot ouvre un terminal invisible et tape la commande à ta place
+resultat = subprocess.run(commande, shell=True, capture_output=True, text=True, timeout=15)
+if resultat.returncode == 0:
+print("[ROBOT] -> Commande réussie.")
+return f"Succès : {resultat.stdout}"
+else:
+print(f"[ROBOT] -> Erreur lors de l'exécution : {resultat.stderr}")
+return f"Erreur : {resultat.stderr}"
+except Exception as e:
+return f"Échec critique du robot : {str(e)}"
 
 def sauvegarder_idee_dans_disque(ordre_patron):
-    historique = []
-    if os.path.exists(FICHIER_HISTORIQUE):
-        try:
-            with open(FICHIER_HISTORIQUE, 'r', encoding='utf-8') as f:
-                historique = json.load(f)
-        except Exception:
-            pass
-    historique.append({"ordre": ordre_patron, "statut": "Exécuté par l'IA"})
-    with open(FICHIER_HISTORIQUE, 'w', encoding='utf-8') as f:
-        json.dump(historique, f, indent=4, ensure_ascii=False)
-
+historique = []
+if os.path.exists(FICHIER_HISTORIQUE):
+try:
+with open(FICHIER_HISTORIQUE, 'r', encoding='utf-8') as f:
+historique = json.load(f)
+except Exception:
+pass
+historique.append({"ordre": ordre_patron, "statut": "Exécuté par l'IA"})
+with open(FICHIER_HISTORIQUE, 'w', encoding='utf-8') as f:
+json.dump(historique, f, indent=4, ensure_ascii=False)
 print("=========================================")
 print(" PASSERELLE V9 : IA PILOTE DU CMD ")
 print("=========================================")
 print("[AUTONOMIE] : Le robot peut maintenant taper dans le CMD.")
 print("[ANTENNE] : En attente des ordres vocaux du Patron...")
-
 @app.route('/ordre_mobile', methods=['POST'])
 def passerelle_autonome():
-    donnees = request.get_json() or {}
-    
-    # Sécurité d'antenne
-    if donnees.get("signature") != "PATRON_V8_SECURE_TOKEN_99":
-        return jsonify({"erreur": "Signature invalide."}), 403
+donnees = request.get_json() or {}
+# Sécurité d'antenne
+if donnees.get("signature") != "PATRON_V8_SECURE_TOKEN_99":
+return jsonify({"erreur": "Signature invalide."}), 403
+mot_recu = donnees.get("mot_de_passe", "").lower()
+if mot_recu != MOT_DE_PASSE_VOCAL:
+return jsonify({"erreur": "Mot de passe incorrect."}), 401
+ordre_patron = donnees.get("ordre", "")
+action_cmd = donnees.get("commande_a_faire", "") # L'ordre direct pour le CMD
+print(f"\n[PATRON RECONNU] -> Ordre reçu : '{ordre_patron}'")
+# Si le Patron demande une action sur la machine, l'IA remplit le CMD d'elle-même
+compte_rendu = ""
+if action_cmd:
+compte_rendu = ia_execute_commande_cmd(action_cmd)
+sauvegarder_idee_dans_disque(ordre_patron)
+return jsonify({
 
-    mot_recu = donnees.get("mot_de_passe", "").lower()
-    if mot_recu != MOT_DE_PASSE_VOCAL:
-        return jsonify({"erreur": "Mot de passe incorrect."}), 401
-
-    ordre_patron = donnees.get("ordre", "")
-    action_cmd = donnees.get("commande_a_faire", "") # L'ordre direct pour le CMD
-    
-    print(f"\n[PATRON RECONNU] -> Ordre reçu : '{ordre_patron}'")
-    
-    # Si le Patron demande une action sur la machine, l'IA remplit le CMD d'elle-même
-    compte_rendu = ""
-    if action_cmd:
-        compte_rendu = ia_execute_commande_cmd(action_cmd)
-        
-    sauvegarder_idee_dans_disque(ordre_patron)
-    
-    return jsonify({
-        "statut": "ORDRE EXÉCUTÉ PAR LE ROBOT",
+"statut": "ORDRE EXÉCUTÉ PAR LE ROBOT",
         "reponse": f"J'ai pris le contrôle du CMD, patron. Résultat : {compte_rendu}"
     })
 
