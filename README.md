@@ -36,15 +36,15 @@ os.system(f'{git_cmd} commit -m "Premier transfert officiel de John IA"')
 os.system(f"{git_cmd} push")
 [texte.py](https://github.com/user-attachments/files/30623996/texte.py)
 import os
-
 install python-dotenv
 install gpiozero
 install python main.py
 install litellm hugginface
 import os
 from flask import Flask, request, jsonify
-from flask_cors import CORS
-app = Flask(__name__)CORS(app)
+from flask_cors 
+import CORS
+app = Flask()CORS(app)
 print("=========================================")
 print(" PASSERELLE PRIVÉE V8 ACTIVE & SÉCURISÉE ")
 print("=========================================")
