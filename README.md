@@ -225,7 +225,6 @@ reparer_et_relancer()
 
 import os
 import requests
-
 def verifier_connexion_systeme():
 print("--- VÉRIFICATION DES CONNEXIONS (PORT 5000) ---")
 # Vérification des variables d'environnement chargées
