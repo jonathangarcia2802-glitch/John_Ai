@@ -2585,35 +2585,30 @@ from dotenv import load_dotenv
 
 # Charger les clés du fichier .env de manière transparente
 load_dotenv()
-
 class RobotHardware:
     def __init__(self) -> None:
         # Récupération sécurisée des clés depuis l'environnement système
         self.cle_livre: str | None = os.getenv("CLE_API_LIVRE")
-        self.cle_deuxieme: str | None = os.getenv("CLE_API_DEUXIEME")
         
-        if not self.cle_livre or not self.cle_deuxieme:
-            logging.warning("⚠️ Configuration incomplète : clés absentes du fichier .env")
-
-        # Configuration physique des composants connectés au Raspberry Pi
-        # Roue gauche (pins 17, 18), roue droite (pins 22, 23)
-        self.motors = Robot(left=(17, 18), right=(22, 23))
-        # Capteur ultrasons (Echo pin 24, Trigger pin 25)
-        self.sensor = DistanceSensor(echo=24, trigger=25)
-
-    def obtenir_distance(self) -> float:
-        """Calcule et renvoie la distance face au robot en centimètres."""
-        try:
-            return float(self.sensor.distance * 100)
-        except Exception as e:
-            logging.error(f"Erreur lors de la lecture du capteur : {e}")
-            return 0.0
-
-    def avancer(self, vitesse: float = 0.5) -> None:
-        self.motors.forward(vitesse)
-
-    def reculer(self, vitesse: float = 0.5) -> None:
-        self.motors.backward(vitesse)
+self.cle_deuxieme: str | None = os.getenv("AQ.Ab8RN6I8QV-ukEvEXUjrFpEHk8oWhOs4eTFOZIn69zh2ie-OzQ.env")        
+if not self.cle_livre or not self.cle_deuxieme:
+logging.warning("⚠️ Configuration incomplète : clés absentes du fichier .env")
+# Configuration physique des composants connectés au Raspberry Pi
+# Roue gauche (pins 17, 18), roue droite (pins 22, 23)
+self.motors = Robot(left=(17, 18), right=(22, 23))
+# Capteur ultrasons (Echo pin 24, Trigger pin 25)
+self.sensor = DistanceSensor(echo=24, trigger=25)
+def obtenir_distance(self) -> float:
+"""Calcule et renvoie la distance face au robot en centimètres."""
+try:
+return float(self.sensor.distance * 100)
+except Exception as e:
+logging.error(f"Erreur lors de la lecture du capteur : {e}")
+return 0.0
+def avancer(self, vitesse: float = 0.5) -> None:
+self.motors.forward(vitesse)
+def reculer(self, vitesse: float = 0.5) -> None:
+self.motors.backward(vitesse)
 
     def tourner_droite(self, vitesse: float = 0.5) -> None:
         self.motors.right(vitesse)
@@ -2621,7 +2616,7 @@ class RobotHardware:
     def stopper(self) -> None:
         self.motors.stop()
 
-    import os
+import os
 import json
 import asyncio
 import subprocess
@@ -2638,13 +2633,13 @@ except ImportError:
     BLEUETOOTH_DISPONIBLE = False
 
 CONFIG_DIR = "qg_souverain_production"
-os.makedirs(CONFIG_DIR, exist_ok=True)
+os.makedirs
 CONFIG_FICHIER = os.path.join(CONFIG_DIR, "memoire_souveraine.json")
 
 def charger_memoire():
-    config_defaut = {
-        "patron": "Jonathan",
-        "station": "QG Souverain v3.6 - Global Node",
+config_defaut = {
+"patron": "Jonathan",
+"station": "QG Souverain v3.6 - Global Node",
         "ngrok_url": "https://remplace-par-ton-url.ngrok-free.app",
         "historique": [],
         "frequence_vocal_hz": 44100,
