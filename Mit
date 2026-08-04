@@ -61,7 +61,7 @@ attachments/files/30625672/john_passerelle_privee.py)
 <img width="640" height="480" alt="visage_patron" src="https://github.com/user-attachments/assets/170c2433-9b09-4072-87cf-7fc20ffedfb0" />
 [trans.py](https://github.com/user-attachments/files/30625668/trans.py)
 if __name__ == '__main__':
-[john-ai.py](https://github.com/user-attachments/files/30625663/john_v6.py)
+[jo.com/user-attachments/files/30625663/john_v6.py)
 app.run(host='0.0.0.0', port=5000, debug=False)
 import tkinter as tk
 from tkinter import messagebox, scrolledtext
