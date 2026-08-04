@@ -1,4 +1,4 @@
-[reparation_qg.py](https://github.com/user-attachments/files/30625693/reparation_qg.py)
+
 
 [john_passerelle2_privee.py(https://github.com/userattachments/files/30625659/john_passerelle2_privee.py)]
 
