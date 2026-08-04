@@ -48,10 +48,8 @@ print("=========================================")
 print(" PASSERELLE PRIVÉE V8 ACTIVE & SÉCURISÉE ")
 print("=========================================")
 print("[PROTOCOLE] : Chiffrement d'identification automatique activé.")
-print("[SÉCURITÉ] : En attente de la signature du Patron...")
-@app.route('/ordre_mobile', methods=['POST'])
-def passerelle_v8():
-donnees = request.get_json() or {}
+print("[SÉCURITÉ] : En attente de la signature du Patron...")@app.route('/ordre_mobile', methods=['POST'])
+def passerelle_v8():donnees = request.get_json() or {}
 # Vérification de la signature du téléphone
 signature = donnees.get("signature", "")
 message_patron = donnees.get("ordre", "")
@@ -64,24 +62,7 @@ return jsonify({
 "statut": "IDÉES REMISES AU CLAIR",
  "reponse": f"Toutes les IA sont connectées, patron. Ordre reçu : {message_patron}"
  })
-[sisi.py](https://github.com/user-attachments/files/30625666/sisi.py)
-[texte.py](https://github.com/user-attachments/files/30625667/texte.py)
-[profil_voix_patron.wav](https://github.com/user-attachments/files/30625687/profil_voix_patron.wav)
-[passerelle_v9.py](https://github.com/user-attachments/files/30625686/passerelle_v9.py)
-[nngrok.py](https://github.com/user-attachments/files/30625685/nngrok.py)
-[memoire_vive.txt](https://github.com/user-attachments/files/30625684/memoire_vive.txt)
-[memoire_lia.json](https://github.com/user-attachments/files/30625683/memoire_lia.json)
-[memoire.txt](https://github.com/user-attachments/files/30625682/memoire.txt)
-[maas.py](https://github.com/user-attachments/files/30625681/maas.py)
-[johnnnnnnnnnn.txt](https://github.com/user-attachments/files/30625680/johnnnnnnnnnn.txt)
-[johnnnnnnnnnn.py](https://github.com/user-attachments/files/30625679/johnnnnnnnnnn.py)
-[john_v8.py](https://github.com/user-attachments/files/30625678/john_v8.py)
-[john_v7.py](https://github.com/user-attachments/files/30625677/john_v7.py)
-[john_v6.py](https://github.com/user-attachments/files/30625676/john_v6.py)
-[john_v5.py](https://github.com/user-attachments/files/30625675/john_v5.py)
-[john_v4.py](https://github.com/user-attachments/files/30625674/john_v4.py)
-[john_passerelle2_privee.py](https://github.com/user-attachments/files/30625673/john_passerelle2_privee.py)
-[john_passerelle_privee.py](https://github.com/user-attachments/files/30625672/john_passerelle_privee.py)
+attachments/files/30625672/john_passerelle_privee.py)
 [john_final.py](https://github.com/user-attachments/files/30625671/john_final.py)
 [john_ai_v9_future_ready.py](https://github.com/user-attachments/files/30625670/john_ai_v9_future_ready.py)
 [john_ai.starting.txt](https://github.com/user-attachments/files/30625669/john_ai.starting.txt)
@@ -94,23 +75,15 @@ import tkinter as tk
 from tkinter import messagebox, scrolledtext
 import requests
 import threading
-class QG_Advanced_UI:
-def __init__(self):
-self.cle_api = "{cle_api}"
-self.url = "{url_corrigee}"
-self.instruction_systeme = (
+#class QG_Advanced_UI:
+def __init__(self):self.cle_api = "{cle_api}"self.url = "{url_corrigee}"self.instruction_systeme = (
 "Tu es l'associé IA du patron. Tu es un ingénieur expert en Python. "
 "Génère UNIQUEMENT du code Python propre, optimisé et commenté. "
 "Pas de bavardage, pas de texte introductif, donne directement le script."
 )
-def interroger_gemini(self, prompt):
-payload = {{"contents": [{{"parts": [{{"text": prompt}}]}}], "systemInstruction": {{"parts": [{{"text": self.instruction_systeme}}]}}}}
-headers = {{"Content-Type": "application/json"}}
+def interroger_gemini(self, prompt):payload = {{"contents": [{{"parts": [{{"text": prompt}}]}}], "systemInstruction": {{"parts": [{{"text": self.instruction_systeme}}]}}}}headers = {{"Content-Type": "application/json"}}
 try:
-reponse = requests.post(self.url, json=payload, headers=headers)
-data = reponse.json()
-if 'candidates' in data and len(data['candidates']) > 0:
-candidate = data['candidates'][0]
+reponse = requests.post(self.url, json=payload, headers=headers)data = reponse.json()if 'candidates' in data and len(data['candidates']) > 0:candidate = data['candidates'][0]
 if 'content' in candidate and 'parts' in candidate['content']:
 parts = candidate['content']['parts']
 if len(parts) > 0 and 'text' in parts[0]:
@@ -176,11 +149,9 @@ label_statut.pack(side="bottom", fill="x", padx=10, pady=5)fenetre.mainloop()
 """with open("ia_clavier.py", "w", encoding="utf-8") as f:
 f.write(code_propre)
 print("[2/3] CODE INJECTÉ : 'ia_clavier.py' réécrit avec la bonne adresse de Google.")
-
 # 3. RELANCEMENT AUTOMATIQUE DU RECTANGLE DE COMMANDEMENT
 print("[3/3] RELANCEMENT IMMINENT... Tu peux aller te coucher, patron.")
 print("=============================================\n")
-
 # Exécute de manière totalement indépendante l'interface corrigée
  subprocess.Popen([sys.executable, "ia_clavier.py"])
 if __name__ == "__main__":
@@ -199,6 +170,7 @@ print(f"-> Environnement : {os.getenv('HOSTING_ENVIRONMENT', 'Hugging Face')}")
 print("---------------------------------------------")
 if __name__ == "__main__":
 verifier_connexion_systeme()
+
 import os
 import json
 import asyncio
@@ -209,24 +181,22 @@ import cv2
 import flet as ft
 try:
 from bleak import BleakScanner
+
 BLEUETOOTH_DISPONIBLE = True
 except ImportError:
-    BLEUETOOTH_DISPONIBLE = False
+BLEUETOOTH_DISPONIBLE = False
 
 CONFIG_DIR = "qg_souverain_core"
 os.makedirs(CONFIG_DIR, exist_ok=True)
 CONFIG_FICHIER = os.path.join(CONFIG_DIR, "memoire_lia.json")
+
 def charger_memoire():
-    config_defaut = {
-        "patron": "Jonathan",
-        "station": "QG Souverain v3.6 - Production Core",
-        "historique": [],
-        "frequence_vocal_hz": 44100,
-        "profil_voix_path": os.path.join(CONFIG_DIR, "profil_voix_patron.wav")
-    }
-    if os.path.exists(CONFIG_FICHIER):
-        try:
-            with open(CONFIG_FICHIER, "r", encoding="utf-8") as f:
+config_defaut = {"patron": "Jonathan","station": "QG Souverain v3.6 - Production Core", "historique "frequence_vocal_hz": 44100,
+"profil_voix_path": os.path.join(CONFIG_DIR, "profil_voix_patron.wav")
+}
+if os.path.exists(CONFIG_FICHIER):
+try:
+with open(CONFIG_FICHIER, "r", encoding="utf-8") as f:
                 data = json.load(f)
                 if isinstance(data, dict):
                     for k, v in config_defaut.items():
@@ -306,16 +276,9 @@ async def main(page: ft.Page):
                 content=ft.Column([
                     ft.Text(f"[{auteur}]", size=10, weight=ft.FontWeight.BOLD, color="blueGrey400"),
                     ft.Text(texte, color=couleur, size=13)
-                ]),
-                padding=10, border_radius=8, bgcolor="grey900"
-            )
-        )
-        page.update()
+   padding=10, border_radius=8, bgcolor="grey900"()page.update()
 
-    # --- TÂCHE DE FOND : SURVEILLANCE ET PROXIMITÉ CONTINUE ---
-    async def boucle_surveillance_arriere_plan():
-        """Tourne en continu pour simuler le radar de proximité et l'écoute mesh."""
-        while True:
+
             try:
                 if BLEUETOOTH_DISPONIBLE:
                     devices = await BleakScanner.discover(timeout=3.0)
