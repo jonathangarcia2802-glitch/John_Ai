@@ -24,7 +24,7 @@ print("[ERREUR] : Ollama n'est pas démarré sur le PC.",
 git_cmd = r'"C:\Program Files\Git\cmd\git.exe"'
 os.system(f"{git_cmd} add .")
 os.system(f'{git_cmd} commit -m "Premier transfert officiel de John IA"')
-os.system(f"{git_cmd} push")
+os.system
 [texte.py](https://github.com/user-attachments/files/30623996/texte.py)
 import os
 install python-dotenv
