@@ -1,7 +1,5 @@
 
 
-[john_passerelle2_privee.py(https://github.com/userattachments/files/30625659/john_passerelle2_privee.py)]
-
 ## Description
 Mon projet d'IA locale connectée à un serveur de déploiement continu.
 ## Architecture
@@ -9,25 +7,19 @@ Mon projet d'IA locale connectée à un serveur de déploiement continu.
 - **Serveur Cloud (Unnug) :** Synchro automatique en arrière-plan
 - [Uploading john_ai_aimport os]
 # Ouvre le tunnel sur le port 5000 (Ollama)
-privee_url = ngrok.connect(5000)
-public_url = ngrok.connect(11434)
-print("URL NGROK OLLAMA :", privee_url)[maas.py](https://github.com/user-attachments/files/30623029/maas.py)
+privee_url = ngrok.con
+print("URL NGROK OLLAMA :", privee_url(https://github.com/user-attachments/files/30623029/maas.py)
 import requests
-# L'adresse locale d'Ollama sur ton PC
-192.168.1.61:11434/v1 = "http://localhost:11434/api/generate"
-# On demande au modèle Open Source (ex: Mistral ou Llama)
-payload = {
+# L'adresse locale dOllama sur ton PC
+192.1684/v1 ="http://localhost:1134/api/generate"
+# On demande au moèle Open Source (ex: Mistral
 "model": "mistral",
-"prompt": "Écris-moi un script Python qui trie les fichiers d'un dossier.",
-"stream": False
-}
+"prompt": "Écris-moi un s
 try:
 reponse = requests.post(url_local, json=payload)
 texte_ia = reponse.json()['response']
 print("\n[IA OPEN SOURCE LOCAL] :\n", texte_ia)except Exception as e:
-print("[ERREUR] : Ollama n'est pas démarré sur le PC.", e)
-[trans.py](https://github.com/user-attachments/files/30623992/trans.py)
-import os
+print("[ERREUR] : Ollama n'est pas démarré sur le PC.",
 # On donne le chemin direct vers l'exécutable Git
 git_cmd = r'"C:\Program Files\Git\cmd\git.exe"'
 os.system(f"{git_cmd} add .")
